@@ -1,35 +1,36 @@
-import { expect, test } from 'vitest';
 import normalizeDefaultValue from './normalizeDefaultValue';
 
-test('should return empty string if no default value', () => {
+it('should return null if no default value', () => {
   expect(normalizeDefaultValue(null)).toMatchObject({
-    normalizedDefaultValue: '',
+    normalizedDefaultValue: null,
     custom: false,
   });
   expect(normalizeDefaultValue('')).toMatchObject({
-    normalizedDefaultValue: '',
+    normalizedDefaultValue: null,
     custom: false,
   });
 });
 
-test('should not change default value that is a plain string', () => {
+it('should not change default value that is a plain string', () => {
   expect(normalizeDefaultValue('test')).toMatchObject({
     normalizedDefaultValue: 'test',
     custom: false,
   });
 });
 
-test('should remove apostrophes and type definition from default value', () => {
+it('should preserve empty-string casts so the form can pre-select them', () => {
   expect(normalizeDefaultValue("''::text")).toMatchObject({
-    normalizedDefaultValue: '',
-    custom: true,
+    normalizedDefaultValue: "''::text",
+    custom: false,
   });
 
   expect(normalizeDefaultValue("''::character varying")).toMatchObject({
-    normalizedDefaultValue: '',
-    custom: true,
+    normalizedDefaultValue: "''::character varying",
+    custom: false,
   });
+});
 
+it('should remove apostrophes and type definition from default value', () => {
   expect(normalizeDefaultValue("'Test Value'::text")).toMatchObject({
     normalizedDefaultValue: 'Test Value',
     custom: true,
@@ -48,7 +49,7 @@ test('should remove apostrophes and type definition from default value', () => {
   });
 });
 
-test('should remove arguments from default value function string if enabled', () => {
+it('should remove arguments from default value function string if enabled', () => {
   expect(
     normalizeDefaultValue("nextval('test_table_seq')", { removeArgs: true }),
   ).toMatchObject({

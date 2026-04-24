@@ -36,7 +36,10 @@ export interface CommonDataGridCellProps<
   /**
    * Function that is called when the cell is saved.
    */
-  onSave?: (value: TValue, options?: { reset: boolean }) => Promise<void>;
+  onSave?: (
+    value: TValue,
+    options?: { reset?: 'null' | 'default' },
+  ) => Promise<void>;
   /**
    * Optimistic value for the cell.
    */
@@ -140,7 +143,7 @@ function DataGridCellContent<
 
   async function handleSave(
     value: DataGridCellValue,
-    options: { reset: boolean } = { reset: false },
+    options: { reset?: 'null' | 'default' } = {},
   ) {
     if (!onCellEdit) {
       return;
@@ -176,7 +179,7 @@ function DataGridCellContent<
         row,
         columnsToUpdate: {
           [id]: {
-            value: !options.reset ? value : undefined,
+            value: options.reset ? undefined : value,
             reset: options.reset,
           },
         },
@@ -242,7 +245,7 @@ function DataGridCellContent<
         primaryButtonText: 'Set to null',
         primaryButtonColor: 'error',
         onPrimaryAction: async () => {
-          await handleSave(null, { reset: true });
+          await handleSave(null, { reset: 'null' });
           focusCell();
         },
       },

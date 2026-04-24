@@ -1,5 +1,6 @@
 import type { ChangeEvent, KeyboardEvent, Ref } from 'react';
 import { Input } from '@/components/ui/v3/input';
+import { CellResetButtons } from '@/features/orgs/projects/storage/dataGrid/components/CellResetButtons';
 import type { UnknownDataGridRow } from '@/features/orgs/projects/storage/dataGrid/components/DataGrid';
 import type { CommonDataGridCellProps } from '@/features/orgs/projects/storage/dataGrid/components/DataGridCell';
 import { useDataGridCell } from '@/features/orgs/projects/storage/dataGrid/components/DataGridCell';
@@ -20,6 +21,8 @@ export default function DataGridDateCell<
   cell: { column },
 }: DataGridDateCellProps<TData>) {
   const specificType = column.columnDef.meta?.specificType;
+  const isNullable = column.columnDef.meta?.isNullable;
+  const hasDefault = column.columnDef.meta?.defaultValue != null;
 
   // Note: No date (year-month-day) is saved for time / timetz columns, so we
   // need to add it manually.
@@ -57,6 +60,11 @@ export default function DataGridDateCell<
       event.stopPropagation();
     }
 
+    if (event.key === 'Tab' && !event.shiftKey && (isNullable || hasDefault)) {
+      event.stopPropagation();
+      return;
+    }
+
     if (event.key === 'Tab') {
       await handleSave();
     }
@@ -74,18 +82,29 @@ export default function DataGridDateCell<
 
   if (isEditing) {
     return (
-      <Input
-        ref={inputRef as Ref<HTMLInputElement>}
-        value={
-          temporaryValue !== null && typeof temporaryValue !== 'undefined'
-            ? temporaryValue
-            : ''
-        }
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        wrapperClassName="absolute top-0 z-10 w-full top-0 left-0 h-full"
-        className="!text-xs h-full w-full resize-none rounded-none border-none px-2 py-1.5 outline-none focus-within:rounded-none focus-within:border-transparent focus-within:bg-white focus-within:shadow-[inset_0_0_0_1.5px_rgba(0,82,205,1)] focus:outline-none focus:ring-0 dark:focus-within:bg-theme-grey-200"
-      />
+      <div className="absolute top-0 left-0 z-10 h-full w-full">
+        <Input
+          ref={inputRef as Ref<HTMLInputElement>}
+          value={
+            temporaryValue !== null && typeof temporaryValue !== 'undefined'
+              ? temporaryValue
+              : ''
+          }
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          wrapperClassName="h-full w-full"
+          className="!text-xs h-full w-full resize-none rounded-none border-none px-2 py-1.5 outline-none focus-within:rounded-none focus-within:border-transparent focus-within:bg-white focus-within:shadow-[inset_0_0_0_1.5px_rgba(0,82,205,1)] focus:outline-none focus:ring-0 dark:focus-within:bg-theme-grey-200"
+        />
+        {(isNullable || hasDefault) && (
+          <CellResetButtons
+            isNullable={isNullable}
+            hasDefault={hasDefault}
+            onSetNull={() => onSave?.(null, { reset: 'null' })}
+            onSetDefault={() => onSave?.(null, { reset: 'default' })}
+            className="absolute right-1 bottom-1"
+          />
+        )}
+      </div>
     );
   }
 

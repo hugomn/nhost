@@ -1,5 +1,6 @@
 import * as yup from 'yup';
 import type { DataBrowserColumnMetadata } from '@/features/orgs/projects/database/dataGrid/types/dataBrowser/dataBrowser';
+import { POSTGRES_DEFAULT_PLACEHOLDER } from '@/features/orgs/projects/database/dataGrid/utils/postgresDefaultPlaceholder';
 
 export interface ColumnDetails {
   isNullable: boolean;
@@ -34,8 +35,12 @@ function createJSONValidationSchema(details: ColumnDetails) {
   const jsonSchema = yup
     .string()
     .test('is-json', 'This is not a valid JSON.', (value) => {
+      if (!value || value === POSTGRES_DEFAULT_PLACEHOLDER) {
+        return true;
+      }
+
       try {
-        JSON.parse(value as string);
+        JSON.parse(value);
 
         return true;
       } catch {

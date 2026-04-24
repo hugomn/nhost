@@ -1,8 +1,7 @@
-import { expect, test } from 'vitest';
 import prepareUpdateColumnQuery from './prepareUpdateColumnQuery';
 
 describe('prepareUpdateColumnQuery', () => {
-  test('should not contain any queries if the updated column does not have any changes', () => {
+  it('should not contain any queries if the updated column does not have any changes', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -28,7 +27,7 @@ describe('prepareUpdateColumnQuery', () => {
     expect(transaction).toHaveLength(0);
   });
 
-  test("should contain a query to rename the column if the updated column's name has changed", () => {
+  it("should contain a query to rename the column if the updated column's name has changed", () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -51,7 +50,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test("should contain queries to drop the default value and to change the type if the updated column's type has changed", () => {
+  it("should contain queries to drop the default value and to change the type if the updated column's type has changed", () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -77,7 +76,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to drop the default value if the updated column has no default value', () => {
+  it('should contain a query to drop the default value if the updated column has no default value', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -108,7 +107,72 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test("should contain a query to set the default value to the updated column's literal default value", () => {
+  it('should not contain any default-value query when neither column has a default', () => {
+    const transaction = prepareUpdateColumnQuery({
+      dataSource: 'test_datasource',
+      schema: 'test_schema',
+      table: 'test_table',
+      originalColumn: {
+        id: 'name',
+        name: 'name',
+        type: { value: 'text', label: 'text' },
+      },
+      column: {
+        id: 'name',
+        name: 'name',
+        type: { value: 'text', label: 'text' },
+      },
+    });
+
+    expect(transaction).toHaveLength(0);
+  });
+
+  it('should contain a query to set the default value when the original column has no default', () => {
+    const transaction = prepareUpdateColumnQuery({
+      dataSource: 'test_datasource',
+      schema: 'test_schema',
+      table: 'test_table',
+      originalColumn: {
+        id: 'name',
+        name: 'name',
+        type: { value: 'text', label: 'text' },
+      },
+      column: {
+        id: 'name',
+        name: 'name',
+        type: { value: 'text', label: 'text' },
+        defaultValue: { value: 'hello', label: 'hello', custom: true },
+      },
+    });
+
+    expect(transaction).toHaveLength(1);
+    expect(transaction[0].args.sql).toBe(
+      "ALTER TABLE test_schema.test_table ALTER COLUMN name SET DEFAULT 'hello';",
+    );
+  });
+
+  it('should not contain a default-value query when original is null and updated value is an empty string', () => {
+    const transaction = prepareUpdateColumnQuery({
+      dataSource: 'test_datasource',
+      schema: 'test_schema',
+      table: 'test_table',
+      originalColumn: {
+        id: 'name',
+        name: 'name',
+        type: { value: 'text', label: 'text' },
+      },
+      column: {
+        id: 'name',
+        name: 'name',
+        type: { value: 'text', label: 'text' },
+        defaultValue: { value: '', label: '', custom: false },
+      },
+    });
+
+    expect(transaction).toHaveLength(0);
+  });
+
+  it("should contain a query to set the default value to the updated column's literal default value", () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -133,7 +197,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to set the default value if the type changed from custom to non-custom or vice versa', () => {
+  it('should contain a query to set the default value if the type changed from custom to non-custom or vice versa', () => {
     // change default value from custom (literal) 'version()' to non-custom
     // (non-literal) 'version()'
     const customToNonCustomTransaction = prepareUpdateColumnQuery({
@@ -185,7 +249,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to set the comment to null if the updated column has no comments', () => {
+  it('should contain a query to set the comment to null if the updated column has no comments', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -209,7 +273,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to set the comment if the updated column any comments', () => {
+  it('should contain a query to set the comment if the updated column any comments', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -233,7 +297,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to set the comment if the update column has a different comment than the original column', () => {
+  it('should contain a query to set the comment if the update column has a different comment than the original column', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -258,7 +322,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to drop "not null" constraint if the updated column is nullable', () => {
+  it('should contain a query to drop "not null" constraint if the updated column is nullable', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -283,7 +347,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to add a "not null" constraint if the updated column is not nullable anymore', () => {
+  it('should contain a query to add a "not null" constraint if the updated column is not nullable anymore', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -308,7 +372,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to add a unique constraint if the updated column should be unique', () => {
+  it('should contain a query to add a unique constraint if the updated column should be unique', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -333,7 +397,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to drop unique constraint if the updated column should not be unique anymore', () => {
+  it('should contain a query to drop unique constraint if the updated column should not be unique anymore', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -359,7 +423,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to generate column as identity if the updated column should be used as identity', () => {
+  it('should contain a query to generate column as identity if the updated column should be used as identity', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -384,7 +448,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should contain a query to drop identity if the updated column should not be used as identity', () => {
+  it('should contain a query to drop identity if the updated column should not be used as identity', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',
@@ -409,7 +473,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should prepare a query when a foreign key should be created', () => {
+  it('should prepare a query when a foreign key should be created', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'default',
       schema: 'public',
@@ -447,7 +511,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should prepare a query when the foreign key should be removed', () => {
+  it('should prepare a query when the foreign key should be removed', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'default',
       schema: 'public',
@@ -486,7 +550,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should prepare two queries when the foreign key should be updated', () => {
+  it('should prepare two queries when the foreign key should be updated', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'default',
       schema: 'public',
@@ -536,7 +600,7 @@ describe('prepareUpdateColumnQuery', () => {
     );
   });
 
-  test('should prepare two queries when foreign key is changed but it should be skipped', () => {
+  it('should prepare two queries when foreign key is changed but it should be skipped', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'default',
       schema: 'public',
@@ -574,7 +638,7 @@ describe('prepareUpdateColumnQuery', () => {
 
     expect(transaction).toHaveLength(0);
   });
-  test('should contain queries to change the type to varchar(10) when column type is updated', () => {
+  it('should contain queries to change the type to varchar(10) when column type is updated', () => {
     const transaction = prepareUpdateColumnQuery({
       dataSource: 'test_datasource',
       schema: 'test_schema',

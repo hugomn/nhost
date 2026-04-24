@@ -4,6 +4,7 @@ import type {
 } from '@/features/orgs/projects/database/dataGrid/types/dataBrowser';
 import { normalizeColumnType } from '@/features/orgs/projects/database/dataGrid/utils/normalizeColumnType';
 import { normalizeDefaultValue } from '@/features/orgs/projects/database/dataGrid/utils/normalizeDefaultValue';
+import { POSTGRESQL_FUNCTION_LABELS } from '@/features/orgs/projects/database/dataGrid/utils/postgresqlConstants';
 /**
  * Converts a raw database column to a normalized database column.
  *
@@ -25,10 +26,12 @@ export default function normalizeDatabaseColumn(
     isNullable: rawColumn.is_nullable === 'YES',
     isUnique: rawColumn.is_unique,
     comment: rawColumn.column_comment || null,
-    defaultValue: rawColumn.column_default
+    defaultValue: normalizedDefaultValue
       ? {
           value: normalizedDefaultValue,
-          label: normalizedDefaultValue,
+          label:
+            POSTGRESQL_FUNCTION_LABELS[normalizedDefaultValue] ??
+            normalizedDefaultValue,
           custom: isDefaultValueCustom,
         }
       : null,

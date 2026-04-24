@@ -75,8 +75,8 @@ export default function prepareUpdateColumnQuery({
 
   const updatedDefaultValue =
     typeof column.defaultValue === 'string'
-      ? column.defaultValue
-      : column.defaultValue?.value || '';
+      ? column.defaultValue || null
+      : column.defaultValue?.value || null;
 
   const isOriginalCustom =
     typeof originalColumn.defaultValue === 'string'

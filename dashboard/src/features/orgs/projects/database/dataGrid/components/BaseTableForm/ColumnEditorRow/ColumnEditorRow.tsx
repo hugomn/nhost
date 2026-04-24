@@ -1,7 +1,6 @@
 import clsx from 'clsx';
 import type { PropsWithoutRef } from 'react';
 import { memo, useEffect, useState } from 'react';
-import type { FieldError } from 'react-hook-form';
 import { useFormContext, useFormState, useWatch } from 'react-hook-form';
 import {
   ControlledAutocomplete,
@@ -16,8 +15,10 @@ import type {
   ColumnType,
   ForeignKeyRelation,
 } from '@/features/orgs/projects/database/dataGrid/types/dataBrowser';
+import { getPostgresFunctionsKey } from '@/features/orgs/projects/database/dataGrid/utils/getPostgresFunctionsKey';
 import {
   identityTypes,
+  POSTGRESQL_FUNCTION_LABELS,
   postgresFunctions,
   postgresTypeGroups,
 } from '@/features/orgs/projects/database/dataGrid/utils/postgresqlConstants';
@@ -125,7 +126,7 @@ function TypeAutocomplete({ index }: FieldArrayInputProps) {
       showCustomOption="first"
       filterOptions={defaultFilterGroupedOptions}
       error={Boolean(errors?.columns?.[index]?.type)}
-      helperText={(errors?.columns?.[index]?.type as FieldError)?.message}
+      helperText={errors?.columns?.[index]?.type?.message}
       renderOption={(optionProps, { label, value, custom }) => {
         if (custom) {
           return (
@@ -144,11 +145,18 @@ function TypeAutocomplete({ index }: FieldArrayInputProps) {
           </OptionBase>
         );
       }}
-      onChange={(_event, value) => {
-        if (typeof value === 'string' || Array.isArray(value)) {
+      onChange={(_event, rawValue) => {
+        if (Array.isArray(rawValue)) {
           return;
         }
 
+        // freeSolo autocomplete returns a plain string when the user types a custom type — normalise it to the same shape as predefined options.
+        const value =
+          typeof rawValue === 'string'
+            ? { value: rawValue, label: rawValue, custom: true }
+            : rawValue;
+
+        setValue(`columns.${index}.type`, value);
         setValue(`columns.${index}.defaultValue`, null);
 
         // We need to reset identityColumnIndex if the column
@@ -176,12 +184,12 @@ function DefaultValueAutocomplete({ index }: FieldArrayInputProps) {
   const identityColumnIndex = useWatch({ name: 'identityColumnIndex' });
   const isIdentity = identityColumnIndex === index;
 
-  const availableFunctions = (postgresFunctions[type?.value] || []).map(
-    (functionName: string) => ({
-      label: functionName,
-      value: functionName,
-    }),
-  );
+  const availableFunctions = (
+    postgresFunctions[getPostgresFunctionsKey(type?.value)] || []
+  ).map((functionName: string) => ({
+    label: POSTGRESQL_FUNCTION_LABELS[functionName] ?? functionName,
+    value: functionName,
+  }));
 
   useEffect(() => {
     if (!defaultValue) {
@@ -254,7 +262,7 @@ export interface ColumnEditorRowProps extends FieldArrayInputProps {
 }
 
 const ColumnEditorRow = memo(({ index, remove }: ColumnEditorRowProps) => (
-  <div className="flex w-full gap-2">
+  <div className="flex w-full items-start gap-2">
     <div className="w-52 flex-none">
       <NameInput index={index} />
     </div>
@@ -267,11 +275,11 @@ const ColumnEditorRow = memo(({ index, remove }: ColumnEditorRowProps) => (
       <DefaultValueAutocomplete index={index} />
     </div>
 
-    <div className="flex w-8 flex-none items-center justify-center">
+    <div className="flex h-10 w-8 flex-none items-center justify-center">
       <ColumnComment index={index} />
     </div>
 
-    <div className="flex w-13 flex-none items-center justify-center">
+    <div className="flex h-10 w-13 flex-none items-center justify-center">
       <Checkbox
         name={`columns.${index}.isNullable`}
         aria-label="Nullable"
@@ -280,7 +288,7 @@ const ColumnEditorRow = memo(({ index, remove }: ColumnEditorRowProps) => (
       />
     </div>
 
-    <div className="flex w-13 flex-none items-center justify-center">
+    <div className="flex h-10 w-13 flex-none items-center justify-center">
       <Checkbox
         name={`columns.${index}.isUnique`}
         aria-label="Unique"
@@ -288,7 +296,7 @@ const ColumnEditorRow = memo(({ index, remove }: ColumnEditorRowProps) => (
       />
     </div>
 
-    <div className="flex w-9 flex-none items-center justify-center">
+    <div className="flex h-10 w-9 flex-none items-center justify-center">
       <RemoveButton
         index={index}
         onClick={() => {

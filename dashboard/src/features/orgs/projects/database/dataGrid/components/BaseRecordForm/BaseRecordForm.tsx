@@ -8,6 +8,7 @@ import type {
   ColumnInsertOptions,
   DataBrowserColumnMetadata,
 } from '@/features/orgs/projects/database/dataGrid/types/dataBrowser';
+import { POSTGRES_DEFAULT_PLACEHOLDER } from '@/features/orgs/projects/database/dataGrid/utils/postgresDefaultPlaceholder';
 import { cn } from '@/lib/utils';
 import type { DialogFormProps } from '@/types/common';
 
@@ -99,23 +100,28 @@ export default function BaseRecordForm({
         const gridColumn = gridColumnMap.get(columnId);
         const value = columnValues[columnId];
 
-        if (!value && (gridColumn?.defaultValue || gridColumn?.isIdentity)) {
+        if (value === POSTGRES_DEFAULT_PLACEHOLDER) {
           return {
             ...options,
-            [columnId]: {
-              value,
-              fallbackValue: 'DEFAULT',
-            },
+            [columnId]: { fallbackValue: 'DEFAULT' },
+          };
+        }
+
+        if (
+          !value &&
+          !gridColumn?.isNullable &&
+          (gridColumn?.defaultValue || gridColumn?.isIdentity)
+        ) {
+          return {
+            ...options,
+            [columnId]: { value, fallbackValue: 'DEFAULT' },
           };
         }
 
         if (!value && gridColumn?.isNullable) {
           return {
             ...options,
-            [columnId]: {
-              value,
-              fallbackValue: 'NULL',
-            },
+            [columnId]: { value, fallbackValue: 'NULL' },
           };
         }
 

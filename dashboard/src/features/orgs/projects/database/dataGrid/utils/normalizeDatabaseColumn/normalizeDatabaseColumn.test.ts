@@ -116,6 +116,24 @@ test('should set identity to true if the column is an identity column', () => {
   });
 });
 
+it('should preserve an empty-string cast default and label it from POSTGRESQL_FUNCTION_LABELS', () => {
+  const rawEmptyStringDefaultColumn: typeof rawColumn = {
+    ...rawColumn,
+    udt_name: 'text',
+    data_type: 'text',
+    full_data_type: 'text',
+    column_default: "''::text",
+  };
+
+  const column = normalizeDatabaseColumn(rawEmptyStringDefaultColumn);
+
+  expect(column.defaultValue).toEqual({
+    value: "''::text",
+    label: "'' (empty string)",
+    custom: false,
+  });
+});
+
 test('should set nullable to true if the column is nullable', () => {
   const rawNullableColumn: typeof rawColumn = {
     ...rawColumn,

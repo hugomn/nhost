@@ -22,13 +22,13 @@ export interface NormalizeDefaultValueOptions {
 export default function normalizeDefaultValue(
   defaultValue?: string | null,
   { removeArgs }: NormalizeDefaultValueOptions = {},
-) {
+): { normalizedDefaultValue: string | null; custom: boolean } {
   if (!defaultValue) {
-    return { normalizedDefaultValue: '', custom: false };
+    return { normalizedDefaultValue: null, custom: false };
   }
 
   if (/^''::(\w|\s)+$/i.test(defaultValue)) {
-    return { normalizedDefaultValue: '', custom: true };
+    return { normalizedDefaultValue: defaultValue, custom: false };
   }
 
   // Note: We are extracting the actual default value from the ambiguous
