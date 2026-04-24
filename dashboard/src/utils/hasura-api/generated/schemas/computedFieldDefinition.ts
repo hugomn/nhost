@@ -15,7 +15,7 @@ export interface ComputedFieldDefinition {
    */
   table_argument?: string | null;
   /**
-   * Name of the argument which accepts the Hasura session object as a JSON/JSONB value. If omitted, the Hasura session object is not passed to the function
+   * Name of the argument which accepts the Hasura session object as a JSON/JSONB value.
    * @nullable
    */
   session_argument?: string | null;
