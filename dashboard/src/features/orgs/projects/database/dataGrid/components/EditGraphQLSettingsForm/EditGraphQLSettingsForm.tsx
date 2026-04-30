@@ -5,6 +5,7 @@ import { useIsTrackedTable } from '@/features/orgs/projects/database/dataGrid/ho
 import { useSetTableTrackingMutation } from '@/features/orgs/projects/database/dataGrid/hooks/useSetTableTrackingMutation';
 import { execPromiseWithErrorToast } from '@/features/orgs/utils/execPromiseWithErrorToast';
 import { ColumnsNameCustomizationSection } from './sections/ColumnsNameCustomizationSection';
+import { ComputedFieldsSection } from './sections/ComputedFieldsSection';
 import { CustomGraphQLRootFieldsSection } from './sections/CustomGraphQLRootFieldsSection';
 import { SetIsEnumSection } from './sections/SetIsEnumSection';
 import { TrackUntrackSection } from './sections/TrackUntrackSection';
@@ -90,6 +91,12 @@ export default function EditGraphQLSettingsForm({
           tableName={tableName}
         />
         <SetIsEnumSection
+          disabled={isTrackingPending}
+          isUntracked={isUntracked}
+          schema={schema}
+          tableName={tableName}
+        />
+        <ComputedFieldsSection
           disabled={isTrackingPending}
           isUntracked={isUntracked}
           schema={schema}
