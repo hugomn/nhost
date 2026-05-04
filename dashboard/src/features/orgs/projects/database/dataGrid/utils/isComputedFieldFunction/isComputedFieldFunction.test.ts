@@ -10,6 +10,7 @@ const buildFn = (
   function_schema: 'public',
   function_name: 'compute_something',
   function_arguments: '',
+  function_definition: '',
   input_arg_types: [],
   ...overrides,
 });

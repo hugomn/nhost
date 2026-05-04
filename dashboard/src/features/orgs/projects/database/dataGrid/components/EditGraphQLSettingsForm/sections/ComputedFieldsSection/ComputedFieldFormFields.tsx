@@ -9,6 +9,7 @@ import type { PostgresFunction } from '@/features/orgs/projects/database/dataGri
 import { isComputedFieldFunction } from '@/features/orgs/projects/database/dataGrid/utils/isComputedFieldFunction';
 import type { QualifiedTable } from '@/utils/hasura-api/generated/schemas';
 import type { ComputedFieldFormValues } from './computedFieldFormTypes';
+import FunctionDefinitionPreview from './FunctionDefinitionPreview';
 
 function buildCreateFunctionTemplate({
   schema,
@@ -96,20 +97,41 @@ export default function ComputedFieldFormFields({
     }
   }, [selectedFunctionName, functionsInSelectedSchema, setValue]);
 
+  const selectedFunction = useMemo(
+    () =>
+      functionsInSelectedSchema.find(
+        (fn) => fn.function_name === selectedFunctionName,
+      ),
+    [functionsInSelectedSchema, selectedFunctionName],
+  );
+
+  const openSqlEditorWith = useCallback(
+    (sqlSource: string) => {
+      const { orgSlug, appSubdomain, dataSourceSlug } = query;
+      if (
+        typeof orgSlug !== 'string' ||
+        typeof appSubdomain !== 'string' ||
+        typeof dataSourceSlug !== 'string'
+      ) {
+        return;
+      }
+      const url = `/orgs/${orgSlug}/projects/${appSubdomain}/database/browser/${dataSourceSlug}/editor?sql=${encodeURIComponent(sqlSource)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
+    [query],
+  );
+
   const handleCreateNewFunction = useCallback(() => {
-    const { orgSlug, appSubdomain, dataSourceSlug } = query;
-    if (
-      typeof orgSlug !== 'string' ||
-      typeof appSubdomain !== 'string' ||
-      typeof dataSourceSlug !== 'string'
-    ) {
+    const fnSchema = selectedSchema || table.schema;
+    openSqlEditorWith(buildCreateFunctionTemplate({ schema: fnSchema, table }));
+  }, [openSqlEditorWith, selectedSchema, table]);
+
+  const handleEditSelectedFunction = useCallback(() => {
+    if (!selectedFunction?.function_definition) {
       return;
     }
-    const fnSchema = selectedSchema || table.schema;
-    const sql = buildCreateFunctionTemplate({ schema: fnSchema, table });
-    const url = `/orgs/${orgSlug}/projects/${appSubdomain}/database/browser/${dataSourceSlug}/editor?sql=${encodeURIComponent(sql)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }, [query, selectedSchema, table]);
+    openSqlEditorWith(selectedFunction.function_definition);
+  }, [openSqlEditorWith, selectedFunction]);
 
   const commentPlaceholder =
     selectedSchema && selectedFunctionName
@@ -127,6 +149,7 @@ export default function ComputedFieldFormFields({
         placeholder="full_name"
         disabled={fieldsDisabled || mode === 'edit'}
         autoComplete="off"
+        className="!bg-background"
         helperText={
           mode === 'edit'
             ? 'The name of an existing computed field cannot be changed. Delete it and add a new one to rename.'
@@ -172,6 +195,13 @@ export default function ComputedFieldFormFields({
           'data-testid': 'computed-field-new-function-action',
         }}
       />
+      {selectedFunction?.function_definition && (
+        <FunctionDefinitionPreview
+          functionLabel={`${selectedFunction.function_schema}.${selectedFunction.function_name}`}
+          definition={selectedFunction.function_definition}
+          onEditInSqlEditor={handleEditSelectedFunction}
+        />
+      )}
       <FormInput
         control={control}
         name="tableArgument"
@@ -179,6 +209,7 @@ export default function ComputedFieldFormFields({
         placeholder="first argument (default)"
         disabled={fieldsDisabled}
         autoComplete="off"
+        className="!bg-background"
         helperText="The argument of the function that receives the table row. Defaults to the first argument."
       />
       <FormInput
@@ -188,6 +219,7 @@ export default function ComputedFieldFormFields({
         placeholder="hasura_session"
         disabled={fieldsDisabled}
         autoComplete="off"
+        className="!bg-background"
         helperText="The argument that receives the Hasura session as JSON."
       />
       <FormInput
@@ -197,6 +229,7 @@ export default function ComputedFieldFormFields({
         placeholder={commentPlaceholder}
         disabled={fieldsDisabled}
         autoComplete="off"
+        className="!bg-background"
       />
     </div>
   );

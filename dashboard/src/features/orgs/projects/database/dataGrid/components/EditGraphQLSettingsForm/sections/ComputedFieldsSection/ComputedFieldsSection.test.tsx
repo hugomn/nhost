@@ -86,12 +86,16 @@ beforeEach(() => {
           function_schema: 'public',
           function_name: 'compute_full_name',
           function_arguments: 'row public.users',
+          function_definition:
+            'CREATE OR REPLACE FUNCTION public.compute_full_name(row public.users) RETURNS text LANGUAGE sql STABLE AS $$ SELECT row.first_name $$;',
           input_arg_types: [{ schema: 'public', name: 'users', type: 'c' }],
         },
         {
           function_schema: 'public',
           function_name: 'calculate_age',
           function_arguments: 'row public.users',
+          function_definition:
+            'CREATE OR REPLACE FUNCTION public.calculate_age(row public.users) RETURNS integer LANGUAGE sql STABLE AS $$ SELECT 0 $$;',
           input_arg_types: [{ schema: 'public', name: 'users', type: 'c' }],
         },
       ],

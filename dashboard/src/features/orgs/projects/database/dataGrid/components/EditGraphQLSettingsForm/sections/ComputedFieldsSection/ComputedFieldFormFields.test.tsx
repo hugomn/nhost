@@ -33,6 +33,13 @@ vi.mock('next/router', () => ({
   }),
 }));
 
+vi.mock('@uiw/react-codemirror', () => ({
+  __esModule: true,
+  default: ({ value }: { value: string }) => (
+    <pre data-testid="codemirror-mock">{value}</pre>
+  ),
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -46,18 +53,24 @@ const FUNCTIONS: PostgresFunction[] = [
     function_schema: 'public',
     function_name: 'compute_full_name',
     function_arguments: 'row public.users',
+    function_definition:
+      'CREATE OR REPLACE FUNCTION public.compute_full_name(row public.users)\n RETURNS text\n LANGUAGE sql\n STABLE\nAS $function$\n  SELECT row.first_name || $$ $$ || row.last_name\n$function$\n',
     input_arg_types: [usersRowArg],
   },
   {
     function_schema: 'public',
     function_name: 'calculate_age',
     function_arguments: 'row public.users',
+    function_definition:
+      'CREATE OR REPLACE FUNCTION public.calculate_age(row public.users)\n RETURNS integer\n LANGUAGE sql\n STABLE\nAS $function$\n  SELECT EXTRACT(YEAR FROM age(row.date_of_birth))::integer\n$function$\n',
     input_arg_types: [usersRowArg],
   },
   {
     function_schema: 'analytics',
     function_name: 'lifetime_value',
     function_arguments: 'row public.users',
+    function_definition:
+      'CREATE OR REPLACE FUNCTION analytics.lifetime_value(row public.users)\n RETURNS numeric\n LANGUAGE sql\n STABLE\nAS $function$\n  SELECT COALESCE(SUM(amount), 0) FROM payments WHERE user_id = row.id\n$function$\n',
     input_arg_types: [usersRowArg],
   },
 ];
@@ -303,6 +316,103 @@ describe('ComputedFieldFormFields', () => {
     const decodedSql = decodeURIComponent(calledUrl.split('?sql=')[1] ?? '');
     expect(decodedSql).toContain(
       'CREATE OR REPLACE FUNCTION analytics.my_computed_field(row public.users)',
+    );
+  });
+
+  it('does not show the function definition preview until a function is selected', () => {
+    render(
+      <TestWrapper
+        mode="create"
+        defaultValues={{ functionSchema: 'public' }}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId('function-definition-preview-toggle'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the function definition preview, expanded by default, with the schema-qualified name', () => {
+    render(
+      <TestWrapper
+        mode="edit"
+        defaultValues={{
+          name: 'full_name',
+          functionSchema: 'public',
+          functionName: 'compute_full_name',
+        }}
+      />,
+    );
+
+    const toggle = screen.getByTestId('function-definition-preview-toggle');
+    expect(toggle).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveTextContent('Function definition');
+    expect(toggle).toHaveTextContent('public.compute_full_name');
+    expect(
+      screen.getByTestId('function-definition-preview-code'),
+    ).toBeInTheDocument();
+  });
+
+  it('collapses the preview when the toggle is clicked', async () => {
+    const user = new TestUserEvent();
+
+    render(
+      <TestWrapper
+        mode="edit"
+        defaultValues={{
+          name: 'full_name',
+          functionSchema: 'public',
+          functionName: 'compute_full_name',
+        }}
+      />,
+    );
+
+    const toggle = screen.getByTestId('function-definition-preview-toggle');
+    expect(
+      screen.getByTestId('function-definition-preview-code'),
+    ).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      screen.queryByTestId('function-definition-preview-code'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens the SQL editor in a new tab with the function definition when Edit in SQL Editor is clicked', async () => {
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockImplementation(() => null as unknown as Window);
+    const user = new TestUserEvent();
+
+    render(
+      <TestWrapper
+        mode="edit"
+        defaultValues={{
+          name: 'full_name',
+          functionSchema: 'public',
+          functionName: 'compute_full_name',
+        }}
+      />,
+    );
+
+    await user.click(screen.getByTestId('function-definition-preview-edit'));
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [calledUrl, target, features] = openSpy.mock.calls[0];
+    expect(target).toBe('_blank');
+    expect(features).toBe('noopener,noreferrer');
+
+    const decodedSql = decodeURIComponent(
+      String(calledUrl).split('?sql=')[1] ?? '',
+    );
+    expect(decodedSql).toContain(
+      'CREATE OR REPLACE FUNCTION public.compute_full_name(row public.users)',
+    );
+    expect(decodedSql).toContain(
+      'SELECT row.first_name || $$ $$ || row.last_name',
     );
   });
 });

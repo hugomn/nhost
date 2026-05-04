@@ -109,7 +109,7 @@ export default function ComputedFieldRow({
       disabled={disabled}
       className="overflow-hidden rounded-md border-1"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_auto] items-center gap-3 bg-background px-4 py-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_5.25rem] items-center gap-3 bg-background px-4 py-3">
         <span className="truncate font-medium font-mono text-foreground text-sm">
           {field.name}
         </span>

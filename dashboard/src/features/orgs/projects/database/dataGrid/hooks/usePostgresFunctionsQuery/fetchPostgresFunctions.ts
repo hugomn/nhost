@@ -24,6 +24,7 @@ export interface PostgresFunction {
   function_schema: string;
   function_name: string;
   function_arguments: string;
+  function_definition: string;
   input_arg_types: PostgresFunctionArgType[];
 }
 
@@ -52,6 +53,7 @@ export default async function fetchPostgresFunctions({
               n.nspname AS function_schema,
               p.proname AS function_name,
               pg_get_function_arguments(p.oid) AS function_arguments,
+              pg_get_functiondef(p.oid) AS function_definition,
               (
                 SELECT COALESCE(
                   json_agg(
