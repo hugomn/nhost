@@ -72,7 +72,10 @@ export default function DeleteComputedFieldAlertDialog({
       </Button>
 
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent className="text-foreground">
+        <AlertDialogContent
+          className="text-foreground"
+          onEscapeKeyDown={(e) => e.stopPropagation()}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Computed Field</AlertDialogTitle>
             <AlertDialogDescription>
