@@ -44,7 +44,10 @@ export default function ComputedFieldsSection({
     isError: isFunctionsError,
   } = usePostgresFunctionsQuery({
     dataSource: DEFAULT_SOURCE,
-    queryOptions: { enabled: !isUntracked },
+    queryOptions: {
+      enabled: !isUntracked,
+      refetchOnWindowFocus: 'always',
+    },
   });
 
   const {
