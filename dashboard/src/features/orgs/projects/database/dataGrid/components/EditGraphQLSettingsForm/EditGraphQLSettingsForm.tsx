@@ -101,6 +101,7 @@ export default function EditGraphQLSettingsForm({
           isUntracked={isUntracked}
           schema={schema}
           tableName={tableName}
+          onDirtyChange={reportSectionDirty}
         />
       </div>
 

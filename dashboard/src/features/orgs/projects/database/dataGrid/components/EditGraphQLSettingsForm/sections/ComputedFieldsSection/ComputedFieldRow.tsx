@@ -37,6 +37,7 @@ export interface ComputedFieldRowProps {
   disabled?: boolean;
   isExpanded: boolean;
   onOpenChange: (open: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export default function ComputedFieldRow({
@@ -50,6 +51,7 @@ export default function ComputedFieldRow({
   disabled,
   isExpanded,
   onOpenChange,
+  onDirtyChange,
 }: ComputedFieldRowProps) {
   const { mutateAsync: editComputedField } = useComputedFieldMetadataMutation({
     type: 'edit',
@@ -60,7 +62,16 @@ export default function ComputedFieldRow({
     resolver: zodResolver(computedFieldValidationSchema),
   });
 
-  const { isSubmitting } = form.formState;
+  const { isSubmitting, isDirty } = form.formState;
+  const isReportingDirty = isDirty && isExpanded;
+
+  useEffect(() => {
+    if (!isReportingDirty) {
+      return undefined;
+    }
+    onDirtyChange?.(true);
+    return () => onDirtyChange?.(false);
+  }, [isReportingDirty, onDirtyChange]);
 
   useEffect(() => {
     if (isExpanded) {

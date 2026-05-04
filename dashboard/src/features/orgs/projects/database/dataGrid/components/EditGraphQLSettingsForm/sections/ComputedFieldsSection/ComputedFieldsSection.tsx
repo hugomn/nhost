@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/v3/alert';
 import { useDatabaseQuery } from '@/features/orgs/projects/database/dataGrid/hooks/useDatabaseQuery';
 import { usePostgresFunctionsQuery } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
@@ -15,6 +15,7 @@ export interface ComputedFieldsSectionProps {
   isUntracked?: boolean;
   schema: string;
   tableName: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export default function ComputedFieldsSection({
@@ -22,6 +23,7 @@ export default function ComputedFieldsSection({
   isUntracked,
   schema,
   tableName,
+  onDirtyChange,
 }: ComputedFieldsSectionProps) {
   const table = { name: tableName, schema };
 
@@ -56,6 +58,21 @@ export default function ComputedFieldsSection({
 
   const [expandedRowName, setExpandedRowName] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+
+  const [dirtyChildCount, setDirtyChildCount] = useState(0);
+  const isAnyChildDirty = dirtyChildCount > 0;
+
+  const reportChildDirty = useCallback((dirty: boolean) => {
+    setDirtyChildCount((prev) => prev + (dirty ? 1 : -1));
+  }, []);
+
+  useEffect(() => {
+    if (!isAnyChildDirty) {
+      return undefined;
+    }
+    onDirtyChange?.(true);
+    return () => onDirtyChange?.(false);
+  }, [isAnyChildDirty, onDirtyChange]);
 
   const handleRowOpenChange = (name: string) => (open: boolean) => {
     if (open) {
@@ -154,6 +171,7 @@ export default function ComputedFieldsSection({
                   disabled={disabled}
                   isExpanded={expandedRowName === field.name}
                   onOpenChange={handleRowOpenChange(field.name)}
+                  onDirtyChange={reportChildDirty}
                 />
               ))}
             </>
@@ -169,6 +187,7 @@ export default function ComputedFieldsSection({
             disabled={disabled}
             isExpanded={isAddingNew}
             onOpenChange={handleStubOpenChange}
+            onDirtyChange={reportChildDirty}
           />
         </div>
       )}

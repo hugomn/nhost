@@ -31,6 +31,7 @@ export interface AddComputedFieldStubRowProps {
   disabled?: boolean;
   isExpanded: boolean;
   onOpenChange: (open: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export default function AddComputedFieldStubRow({
@@ -43,6 +44,7 @@ export default function AddComputedFieldStubRow({
   disabled,
   isExpanded,
   onOpenChange,
+  onDirtyChange,
 }: AddComputedFieldStubRowProps) {
   const { mutateAsync: createComputedField } = useComputedFieldMetadataMutation(
     { type: 'add' },
@@ -53,7 +55,16 @@ export default function AddComputedFieldStubRow({
     resolver: zodResolver(computedFieldValidationSchema),
   });
 
-  const { isSubmitting } = form.formState;
+  const { isSubmitting, isDirty } = form.formState;
+  const isReportingDirty = isDirty && isExpanded;
+
+  useEffect(() => {
+    if (!isReportingDirty) {
+      return undefined;
+    }
+    onDirtyChange?.(true);
+    return () => onDirtyChange?.(false);
+  }, [isReportingDirty, onDirtyChange]);
 
   useEffect(() => {
     if (!isExpanded) {

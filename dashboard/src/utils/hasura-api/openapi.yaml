@@ -1680,7 +1680,7 @@ components:
           nullable: true
         session_argument:
           type: string
-          description: Name of the argument which accepts the Hasura session object as a JSON/JSONB value.
+          description: Name of the argument which accepts the Hasura session object as a JSON/JSONB value. If omitted, the Hasura session object is not passed to the function
           nullable: true
 
     ComputedFieldBulkOperation:

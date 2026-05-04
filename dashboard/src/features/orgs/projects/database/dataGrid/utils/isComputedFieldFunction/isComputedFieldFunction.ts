@@ -3,10 +3,10 @@ import type { QualifiedTable } from '@/utils/hasura-api/generated/schemas';
 
 /**
  * Determines whether a Postgres function can back a computed field on the
- * given table. Hasura requires the function to receive the table's row
- * type as input, and every input argument must be either a base scalar
- * (`b`) or a composite (`c`) type — anything else (pseudo, enum, domain,
- * range) is rejected.
+ * given table. The function must receive the table's row type as input,
+ * and every input argument must be either a base scalar (`b`) or a
+ * composite (`c`) type — anything else (pseudo, enum, domain, range) is
+ * rejected.
  */
 export default function isComputedFieldFunction(
   fn: PostgresFunction,
