@@ -151,7 +151,7 @@ export default function ComputedFieldFormFields({
         control={control}
         name="name"
         label="Computed Field Name"
-        placeholder="full_name"
+        placeholder="field_name"
         disabled={fieldsDisabled || mode === 'edit'}
         autoComplete="off"
         className="!bg-background"
