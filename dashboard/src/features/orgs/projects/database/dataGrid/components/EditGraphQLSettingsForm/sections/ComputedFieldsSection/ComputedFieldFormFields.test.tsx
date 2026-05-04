@@ -297,7 +297,10 @@ describe('ComputedFieldFormFields', () => {
       String(calledUrl).split('?sql=')[1] ?? '',
     );
     expect(decodedSql).toContain(
-      'CREATE OR REPLACE FUNCTION public.my_computed_field(row public.users)',
+      'CREATE OR REPLACE FUNCTION public.my_computed_field(user_row public.users)',
+    );
+    expect(decodedSql).toContain(
+      'The first argument "user_row" must accept a row of "public.users".',
     );
   });
 
@@ -323,7 +326,7 @@ describe('ComputedFieldFormFields', () => {
     const calledUrl = String(openSpy.mock.calls[0][0]);
     const decodedSql = decodeURIComponent(calledUrl.split('?sql=')[1] ?? '');
     expect(decodedSql).toContain(
-      'CREATE OR REPLACE FUNCTION analytics.my_computed_field(row public.users)',
+      'CREATE OR REPLACE FUNCTION analytics.my_computed_field(user_row public.users)',
     );
   });
 

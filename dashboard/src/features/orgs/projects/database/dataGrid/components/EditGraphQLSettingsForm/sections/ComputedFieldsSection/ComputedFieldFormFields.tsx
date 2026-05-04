@@ -1,10 +1,12 @@
 import { ExternalLink, Plus } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { singular } from 'pluralize';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormCombobox } from '@/components/form/FormCombobox';
 import { FormInput } from '@/components/form/FormInput';
+import { InfoTooltip } from '@/features/orgs/projects/common/components/InfoTooltip';
 import type { PostgresFunction } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
 import { isComputedFieldFunction } from '@/features/orgs/projects/database/dataGrid/utils/isComputedFieldFunction';
 import type { QualifiedTable } from '@/utils/hasura-api/generated/schemas';
@@ -18,9 +20,10 @@ function buildCreateFunctionTemplate({
   schema: string;
   table: QualifiedTable;
 }) {
+  const rowArgName = `${singular(table.name)}_row`;
   return `-- Computed field function for "${table.schema}.${table.name}"
--- The first argument must accept a row of "${table.schema}.${table.name}".
-CREATE OR REPLACE FUNCTION ${schema}.my_computed_field(row ${table.schema}.${table.name})
+-- The first argument "${rowArgName}" must accept a row of "${table.schema}.${table.name}".
+CREATE OR REPLACE FUNCTION ${schema}.my_computed_field(${rowArgName} ${table.schema}.${table.name})
 RETURNS text
 LANGUAGE sql
 STABLE
@@ -207,22 +210,35 @@ export default function ComputedFieldFormFields({
       <FormInput
         control={control}
         name="tableArgument"
-        label="Table Row Argument"
+        label={
+          <div className="flex flex-row items-center gap-2">
+            Table Row Argument{' '}
+            <InfoTooltip>
+              The argument of the function that receives the table row. Defaults
+              to the first argument.
+            </InfoTooltip>
+          </div>
+        }
         placeholder="first argument (default)"
         disabled={fieldsDisabled}
         autoComplete="off"
         className="!bg-background"
-        helperText="The argument of the function that receives the table row. Defaults to the first argument."
       />
       <FormInput
         control={control}
         name="sessionArgument"
-        label="Session Argument"
+        label={
+          <div className="flex flex-row items-center gap-2">
+            Session Argument{' '}
+            <InfoTooltip>
+              The argument that receives the Hasura session as JSON.
+            </InfoTooltip>
+          </div>
+        }
         placeholder="hasura_session"
         disabled={fieldsDisabled}
         autoComplete="off"
         className="!bg-background"
-        helperText="The argument that receives the Hasura session as JSON."
       />
       <FormInput
         control={control}
