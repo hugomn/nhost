@@ -75,12 +75,16 @@ const FUNCTIONS: PostgresFunction[] = [
   },
 ];
 
+const SCHEMAS = ['public', 'analytics', 'auth', 'storage'];
+
 interface TestWrapperProps {
   mode: 'create' | 'edit';
   defaultValues?: Partial<ComputedFieldFormValues>;
   functions?: PostgresFunction[];
+  schemas?: string[];
   table?: QualifiedTable;
   isFunctionsLoading?: boolean;
+  isSchemasLoading?: boolean;
   disabled?: boolean;
   formRef?: { current: UseFormReturn<ComputedFieldFormValues> | null };
 }
@@ -89,8 +93,10 @@ function TestWrapper({
   mode,
   defaultValues,
   functions = FUNCTIONS,
+  schemas = SCHEMAS,
   table = TABLE,
   isFunctionsLoading,
+  isSchemasLoading,
   disabled,
   formRef,
 }: TestWrapperProps) {
@@ -105,8 +111,10 @@ function TestWrapper({
       <ComputedFieldFormFields
         mode={mode}
         functions={functions}
+        schemas={schemas}
         table={table}
         isFunctionsLoading={isFunctionsLoading}
+        isSchemasLoading={isSchemasLoading}
         disabled={disabled}
       />
     </FormProvider>

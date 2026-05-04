@@ -9,9 +9,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/v3/collapsible';
 import { Form } from '@/components/ui/v3/form';
-import { useGetMetadataResourceVersion } from '@/features/orgs/projects/common/hooks/useGetMetadataResourceVersion';
-import { useIsPlatform } from '@/features/orgs/projects/common/hooks/useIsPlatform';
-import { useEditComputedFieldMutation } from '@/features/orgs/projects/database/dataGrid/hooks/useEditComputedFieldMutation';
+import { useComputedFieldMetadataMutation } from '@/features/orgs/projects/database/dataGrid/hooks/useComputedFieldMetadataMutation';
 import type { PostgresFunction } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
 import { execPromiseWithErrorToast } from '@/features/orgs/utils/execPromiseWithErrorToast';
 import { cn } from '@/lib/utils';
@@ -33,7 +31,9 @@ export interface ComputedFieldRowProps {
   table: QualifiedTable;
   source: string;
   functions: PostgresFunction[];
+  schemas: string[];
   isFunctionsLoading?: boolean;
+  isSchemasLoading?: boolean;
   disabled?: boolean;
   isExpanded: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,14 +44,16 @@ export default function ComputedFieldRow({
   table,
   source,
   functions,
+  schemas,
   isFunctionsLoading,
+  isSchemasLoading,
   disabled,
   isExpanded,
   onOpenChange,
 }: ComputedFieldRowProps) {
-  const isPlatform = useIsPlatform();
-  const { refetch: refetchResourceVersion } = useGetMetadataResourceVersion();
-  const { mutateAsync: editComputedField } = useEditComputedFieldMutation();
+  const { mutateAsync: editComputedField } = useComputedFieldMetadataMutation({
+    type: 'edit',
+  });
 
   const form = useForm<ComputedFieldFormValues>({
     defaultValues: computedFieldItemToFormValues(field),
@@ -75,21 +77,7 @@ export default function ComputedFieldRow({
     const args = formValuesToAddComputedFieldArgs(values, table, source);
 
     await execPromiseWithErrorToast(
-      async () => {
-        if (isPlatform) {
-          const { data: latestResourceVersion } =
-            await refetchResourceVersion();
-          await editComputedField({
-            resourceVersion: latestResourceVersion!,
-            args,
-          });
-        } else {
-          await editComputedField({
-            args,
-            original: field,
-          });
-        }
-      },
+      () => editComputedField({ args, original: field }),
       {
         loadingMessage: 'Updating computed field...',
         successMessage: 'Computed field updated successfully.',
@@ -153,8 +141,10 @@ export default function ComputedFieldRow({
             <ComputedFieldFormFields
               mode="edit"
               functions={functions}
+              schemas={schemas}
               table={table}
               isFunctionsLoading={isFunctionsLoading}
+              isSchemasLoading={isSchemasLoading}
               disabled={disabled || isSubmitting}
             />
             <div className="flex items-center justify-end gap-2">

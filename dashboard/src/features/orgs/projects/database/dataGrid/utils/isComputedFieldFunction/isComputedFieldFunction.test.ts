@@ -58,17 +58,19 @@ describe('isComputedFieldFunction', () => {
     expect(isComputedFieldFunction(fn, usersTable)).toBe(false);
   });
 
-  it('rejects a function with an enum, domain, or range argument', () => {
-    for (const type of ['e', 'd', 'r']) {
-      const fn = buildFn({
-        input_arg_types: [
-          { schema: 'public', name: 'users', type: 'c' },
-          { schema: 'public', name: 'mood', type },
-        ],
-      });
+  it.each([
+    ['enum', 'e'],
+    ['domain', 'd'],
+    ['range', 'r'],
+  ])('rejects a function with a %s argument', (_label, type) => {
+    const fn = buildFn({
+      input_arg_types: [
+        { schema: 'public', name: 'users', type: 'c' },
+        { schema: 'public', name: 'mood', type },
+      ],
+    });
 
-      expect(isComputedFieldFunction(fn, usersTable)).toBe(false);
-    }
+    expect(isComputedFieldFunction(fn, usersTable)).toBe(false);
   });
 
   it('rejects a same-named row that lives in a different schema', () => {

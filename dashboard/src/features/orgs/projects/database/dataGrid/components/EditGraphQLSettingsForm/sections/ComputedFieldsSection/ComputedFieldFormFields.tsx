@@ -33,16 +33,20 @@ $$;
 export interface ComputedFieldFormFieldsProps {
   mode: 'create' | 'edit';
   functions: PostgresFunction[];
+  schemas: string[];
   table: QualifiedTable;
   isFunctionsLoading?: boolean;
+  isSchemasLoading?: boolean;
   disabled?: boolean;
 }
 
 export default function ComputedFieldFormFields({
   mode,
   functions,
+  schemas,
   table,
   isFunctionsLoading,
+  isSchemasLoading,
   disabled,
 }: ComputedFieldFormFieldsProps) {
   const { query } = useRouter();
@@ -52,13 +56,11 @@ export default function ComputedFieldFormFields({
   const selectedSchema = watch('functionSchema');
   const selectedFunctionName = watch('functionName');
 
-  const schemaOptions: { value: string; label: ReactNode }[] = useMemo(() => {
-    const unique = Array.from(
-      new Set(functions.map((fn) => fn.function_schema)),
-    );
-    unique.sort();
-    return unique.map((schema) => ({ value: schema, label: schema }));
-  }, [functions]);
+  const schemaOptions: { value: string; label: ReactNode }[] = useMemo(
+    () =>
+      [...schemas].sort().map((schema) => ({ value: schema, label: schema })),
+    [schemas],
+  );
 
   const functionsInSelectedSchema = useMemo(
     () =>
@@ -163,10 +165,10 @@ export default function ComputedFieldFormFields({
         placeholder="Select a schema"
         searchPlaceholder="Search schemas..."
         emptyText={
-          isFunctionsLoading ? 'Loading schemas...' : 'No schemas available.'
+          isSchemasLoading ? 'Loading schemas...' : 'No schemas available.'
         }
         options={schemaOptions}
-        disabled={fieldsDisabled || isFunctionsLoading}
+        disabled={fieldsDisabled || isSchemasLoading}
       />
       <FormCombobox
         control={control}

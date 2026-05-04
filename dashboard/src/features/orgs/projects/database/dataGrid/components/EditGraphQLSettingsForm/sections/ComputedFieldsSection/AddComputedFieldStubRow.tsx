@@ -9,9 +9,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/v3/collapsible';
 import { Form } from '@/components/ui/v3/form';
-import { useGetMetadataResourceVersion } from '@/features/orgs/projects/common/hooks/useGetMetadataResourceVersion';
-import { useIsPlatform } from '@/features/orgs/projects/common/hooks/useIsPlatform';
-import { useCreateComputedFieldMutation } from '@/features/orgs/projects/database/dataGrid/hooks/useCreateComputedFieldMutation';
+import { useComputedFieldMetadataMutation } from '@/features/orgs/projects/database/dataGrid/hooks/useComputedFieldMetadataMutation';
 import type { PostgresFunction } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
 import { execPromiseWithErrorToast } from '@/features/orgs/utils/execPromiseWithErrorToast';
 import type { QualifiedTable } from '@/utils/hasura-api/generated/schemas';
@@ -27,7 +25,9 @@ export interface AddComputedFieldStubRowProps {
   table: QualifiedTable;
   source: string;
   functions: PostgresFunction[];
+  schemas: string[];
   isFunctionsLoading?: boolean;
+  isSchemasLoading?: boolean;
   disabled?: boolean;
   isExpanded: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,14 +37,16 @@ export default function AddComputedFieldStubRow({
   table,
   source,
   functions,
+  schemas,
   isFunctionsLoading,
+  isSchemasLoading,
   disabled,
   isExpanded,
   onOpenChange,
 }: AddComputedFieldStubRowProps) {
-  const isPlatform = useIsPlatform();
-  const { refetch: refetchResourceVersion } = useGetMetadataResourceVersion();
-  const { mutateAsync: createComputedField } = useCreateComputedFieldMutation();
+  const { mutateAsync: createComputedField } = useComputedFieldMetadataMutation(
+    { type: 'add' },
+  );
 
   const form = useForm<ComputedFieldFormValues>({
     defaultValues: defaultComputedFieldValues,
@@ -67,25 +69,11 @@ export default function AddComputedFieldStubRow({
   const handleSubmit = form.handleSubmit(async (values) => {
     const args = formValuesToAddComputedFieldArgs(values, table, source);
 
-    await execPromiseWithErrorToast(
-      async () => {
-        if (isPlatform) {
-          const { data: latestResourceVersion } =
-            await refetchResourceVersion();
-          await createComputedField({
-            resourceVersion: latestResourceVersion!,
-            args,
-          });
-        } else {
-          await createComputedField({ args });
-        }
-      },
-      {
-        loadingMessage: 'Adding computed field...',
-        successMessage: 'Computed field added successfully.',
-        errorMessage: 'Failed to add computed field.',
-      },
-    );
+    await execPromiseWithErrorToast(() => createComputedField({ args }), {
+      loadingMessage: 'Adding computed field...',
+      successMessage: 'Computed field added successfully.',
+      errorMessage: 'Failed to add computed field.',
+    });
 
     form.reset(defaultComputedFieldValues);
     onOpenChange(false);
@@ -118,8 +106,10 @@ export default function AddComputedFieldStubRow({
             <ComputedFieldFormFields
               mode="create"
               functions={functions}
+              schemas={schemas}
               table={table}
               isFunctionsLoading={isFunctionsLoading}
+              isSchemasLoading={isSchemasLoading}
               disabled={disabled || isSubmitting}
             />
             <div className="flex items-center justify-end gap-2">
