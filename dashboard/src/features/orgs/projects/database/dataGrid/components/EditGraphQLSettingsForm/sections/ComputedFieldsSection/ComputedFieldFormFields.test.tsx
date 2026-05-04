@@ -1,9 +1,15 @@
 import { act } from 'react';
 import { FormProvider, type UseFormReturn, useForm } from 'react-hook-form';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import type { PostgresFunction } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
 import { mockMatchMediaValue } from '@/tests/mocks';
-import { render, screen } from '@/tests/testUtils';
+import {
+  mockPointerEvent,
+  render,
+  screen,
+  TestUserEvent,
+} from '@/tests/testUtils';
+import type { QualifiedTable } from '@/utils/hasura-api/generated/schemas';
 import ComputedFieldFormFields from './ComputedFieldFormFields';
 import {
   type ComputedFieldFormValues,
@@ -15,21 +21,44 @@ Object.defineProperty(window, 'matchMedia', {
   value: vi.fn().mockImplementation(mockMatchMediaValue),
 });
 
+mockPointerEvent();
+
+vi.mock('next/router', () => ({
+  useRouter: () => ({
+    query: {
+      orgSlug: 'test-org',
+      appSubdomain: 'test-project',
+      dataSourceSlug: 'default',
+    },
+  }),
+}));
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+const TABLE: QualifiedTable = { name: 'users', schema: 'public' };
+
+const usersRowArg = { schema: 'public', name: 'users', type: 'c' };
+
 const FUNCTIONS: PostgresFunction[] = [
   {
     function_schema: 'public',
     function_name: 'compute_full_name',
     function_arguments: 'row public.users',
+    input_arg_types: [usersRowArg],
   },
   {
     function_schema: 'public',
     function_name: 'calculate_age',
     function_arguments: 'row public.users',
+    input_arg_types: [usersRowArg],
   },
   {
     function_schema: 'analytics',
     function_name: 'lifetime_value',
     function_arguments: 'row public.users',
+    input_arg_types: [usersRowArg],
   },
 ];
 
@@ -37,6 +66,7 @@ interface TestWrapperProps {
   mode: 'create' | 'edit';
   defaultValues?: Partial<ComputedFieldFormValues>;
   functions?: PostgresFunction[];
+  table?: QualifiedTable;
   isFunctionsLoading?: boolean;
   disabled?: boolean;
   formRef?: { current: UseFormReturn<ComputedFieldFormValues> | null };
@@ -46,6 +76,7 @@ function TestWrapper({
   mode,
   defaultValues,
   functions = FUNCTIONS,
+  table = TABLE,
   isFunctionsLoading,
   disabled,
   formRef,
@@ -61,6 +92,7 @@ function TestWrapper({
       <ComputedFieldFormFields
         mode={mode}
         functions={functions}
+        table={table}
         isFunctionsLoading={isFunctionsLoading}
         disabled={disabled}
       />
@@ -196,5 +228,81 @@ describe('ComputedFieldFormFields', () => {
     expect(screen.getByLabelText('Table Row Argument')).toBeDisabled();
     expect(screen.getByLabelText('Session Argument')).toBeDisabled();
     expect(screen.getByLabelText('Comment')).toBeDisabled();
+  });
+
+  it('renders the New Function action when the function combobox is opened', async () => {
+    const user = new TestUserEvent();
+    render(
+      <TestWrapper
+        mode="create"
+        defaultValues={{ functionSchema: 'public' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Function Name' }));
+
+    expect(
+      await screen.findByTestId('computed-field-new-function-action'),
+    ).toBeInTheDocument();
+  });
+
+  it('opens the SQL editor in a new tab with a CREATE FUNCTION template when New Function is clicked', async () => {
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockImplementation(() => null as unknown as Window);
+    const user = new TestUserEvent();
+
+    render(
+      <TestWrapper
+        mode="create"
+        defaultValues={{ functionSchema: 'public' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Function Name' }));
+    await user.click(
+      await screen.findByTestId('computed-field-new-function-action'),
+    );
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [calledUrl, target, features] = openSpy.mock.calls[0];
+    expect(target).toBe('_blank');
+    expect(features).toBe('noopener,noreferrer');
+    expect(String(calledUrl)).toMatch(
+      /^\/orgs\/test-org\/projects\/test-project\/database\/browser\/default\/editor\?sql=/,
+    );
+
+    const decodedSql = decodeURIComponent(
+      String(calledUrl).split('?sql=')[1] ?? '',
+    );
+    expect(decodedSql).toContain(
+      'CREATE OR REPLACE FUNCTION public.my_computed_field(row public.users)',
+    );
+  });
+
+  it('uses the table schema in the SQL template when the function schema differs', async () => {
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockImplementation(() => null as unknown as Window);
+    const user = new TestUserEvent();
+
+    render(
+      <TestWrapper
+        mode="create"
+        table={{ name: 'users', schema: 'public' }}
+        defaultValues={{ functionSchema: 'analytics' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Function Name' }));
+    await user.click(
+      await screen.findByTestId('computed-field-new-function-action'),
+    );
+
+    const calledUrl = String(openSpy.mock.calls[0][0]);
+    const decodedSql = decodeURIComponent(calledUrl.split('?sql=')[1] ?? '');
+    expect(decodedSql).toContain(
+      'CREATE OR REPLACE FUNCTION analytics.my_computed_field(row public.users)',
+    );
   });
 });

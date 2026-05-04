@@ -11,6 +11,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from '@/components/ui/v3/command';
 import {
   FormControl,
@@ -35,6 +36,12 @@ export interface FormComboboxOption {
   label: ReactNode;
 }
 
+export interface FormComboboxFooterAction {
+  label: ReactNode;
+  onSelect: () => void;
+  'data-testid'?: string;
+}
+
 interface FormComboboxProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -51,6 +58,7 @@ interface FormComboboxProps<
   searchPlaceholder?: string;
   emptyText?: string;
   options: FormComboboxOption[];
+  footerAction?: FormComboboxFooterAction;
   'data-testid'?: string;
 }
 
@@ -69,6 +77,7 @@ function FormComboboxImpl<
     helperText,
     disabled,
     options,
+    footerAction,
     searchPlaceholder = 'Search...',
     emptyText = 'No results found.',
     'data-testid': dataTestId,
@@ -165,6 +174,22 @@ function FormComboboxImpl<
                           </CommandItem>
                         ))}
                       </CommandGroup>
+                      {footerAction && (
+                        <>
+                          <CommandSeparator />
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => {
+                                footerAction.onSelect();
+                                setOpen(false);
+                              }}
+                              data-testid={footerAction['data-testid']}
+                            >
+                              {footerAction.label}
+                            </CommandItem>
+                          </CommandGroup>
+                        </>
+                      )}
                     </CommandList>
                   </Command>
                 </PopoverContent>

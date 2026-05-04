@@ -153,6 +153,7 @@ export default function ComputedFieldRow({
             <ComputedFieldFormFields
               mode="edit"
               functions={functions}
+              table={table}
               isFunctionsLoading={isFunctionsLoading}
               disabled={disabled || isSubmitting}
             />

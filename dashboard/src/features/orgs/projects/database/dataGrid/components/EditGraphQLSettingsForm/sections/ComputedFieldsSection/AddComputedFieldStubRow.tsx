@@ -118,6 +118,7 @@ export default function AddComputedFieldStubRow({
             <ComputedFieldFormFields
               mode="create"
               functions={functions}
+              table={table}
               isFunctionsLoading={isFunctionsLoading}
               disabled={disabled || isSubmitting}
             />

@@ -1,14 +1,38 @@
+import { ExternalLink, Plus } from 'lucide-react';
+import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormCombobox } from '@/components/form/FormCombobox';
 import { FormInput } from '@/components/form/FormInput';
 import type { PostgresFunction } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
+import { isComputedFieldFunction } from '@/features/orgs/projects/database/dataGrid/utils/isComputedFieldFunction';
+import type { QualifiedTable } from '@/utils/hasura-api/generated/schemas';
 import type { ComputedFieldFormValues } from './computedFieldFormTypes';
+
+function buildCreateFunctionTemplate({
+  schema,
+  table,
+}: {
+  schema: string;
+  table: QualifiedTable;
+}) {
+  return `-- Computed field function for "${table.schema}.${table.name}"
+-- The first argument must accept a row of "${table.schema}.${table.name}".
+CREATE OR REPLACE FUNCTION ${schema}.my_computed_field(row ${table.schema}.${table.name})
+RETURNS text
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT ''::text;
+$$;
+`;
+}
 
 export interface ComputedFieldFormFieldsProps {
   mode: 'create' | 'edit';
   functions: PostgresFunction[];
+  table: QualifiedTable;
   isFunctionsLoading?: boolean;
   disabled?: boolean;
 }
@@ -16,9 +40,11 @@ export interface ComputedFieldFormFieldsProps {
 export default function ComputedFieldFormFields({
   mode,
   functions,
+  table,
   isFunctionsLoading,
   disabled,
 }: ComputedFieldFormFieldsProps) {
+  const { query } = useRouter();
   const { control, watch, setValue } =
     useFormContext<ComputedFieldFormValues>();
 
@@ -34,8 +60,13 @@ export default function ComputedFieldFormFields({
   }, [functions]);
 
   const functionsInSelectedSchema = useMemo(
-    () => functions.filter((fn) => fn.function_schema === selectedSchema),
-    [functions, selectedSchema],
+    () =>
+      functions.filter(
+        (fn) =>
+          fn.function_schema === selectedSchema &&
+          isComputedFieldFunction(fn, table),
+      ),
+    [functions, selectedSchema, table],
   );
 
   const functionOptions: { value: string; label: ReactNode }[] = useMemo(
@@ -64,6 +95,21 @@ export default function ComputedFieldFormFields({
       setValue('functionName', '', { shouldDirty: true });
     }
   }, [selectedFunctionName, functionsInSelectedSchema, setValue]);
+
+  const handleCreateNewFunction = useCallback(() => {
+    const { orgSlug, appSubdomain, dataSourceSlug } = query;
+    if (
+      typeof orgSlug !== 'string' ||
+      typeof appSubdomain !== 'string' ||
+      typeof dataSourceSlug !== 'string'
+    ) {
+      return;
+    }
+    const fnSchema = selectedSchema || table.schema;
+    const sql = buildCreateFunctionTemplate({ schema: fnSchema, table });
+    const url = `/orgs/${orgSlug}/projects/${appSubdomain}/database/browser/${dataSourceSlug}/editor?sql=${encodeURIComponent(sql)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [query, selectedSchema, table]);
 
   const commentPlaceholder =
     selectedSchema && selectedFunctionName
@@ -110,10 +156,21 @@ export default function ComputedFieldFormFields({
         emptyText={
           isFunctionsLoading
             ? 'Loading functions...'
-            : 'No functions in this schema.'
+            : 'No compatible functions in this schema.'
         }
         options={functionOptions}
         disabled={fieldsDisabled || isFunctionsLoading || !selectedSchema}
+        footerAction={{
+          label: (
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              <span>New Function</span>
+              <ExternalLink className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+            </>
+          ),
+          onSelect: handleCreateNewFunction,
+          'data-testid': 'computed-field-new-function-action',
+        }}
       />
       <FormInput
         control={control}

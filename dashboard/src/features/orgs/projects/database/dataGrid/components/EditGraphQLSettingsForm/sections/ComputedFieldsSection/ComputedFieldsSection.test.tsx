@@ -86,11 +86,13 @@ beforeEach(() => {
           function_schema: 'public',
           function_name: 'compute_full_name',
           function_arguments: 'row public.users',
+          input_arg_types: [{ schema: 'public', name: 'users', type: 'c' }],
         },
         {
           function_schema: 'public',
           function_name: 'calculate_age',
           function_arguments: 'row public.users',
+          input_arg_types: [{ schema: 'public', name: 'users', type: 'c' }],
         },
       ],
     },
