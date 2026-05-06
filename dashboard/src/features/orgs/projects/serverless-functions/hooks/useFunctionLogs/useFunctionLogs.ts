@@ -68,7 +68,6 @@ export default function useFunctionLogs({
       from,
       to,
       path,
-      regexFilter,
     },
     client: isPlatform ? splitGraphqlClient : localLogsClient,
     fetchPolicy: 'cache-and-network',

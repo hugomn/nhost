@@ -79,11 +79,34 @@ export enum CheckoutStatus {
 
 export type ConfigAi = {
   __typename?: 'ConfigAI';
+  anthropic?: Maybe<ConfigAiAnthropic>;
   autoEmbeddings?: Maybe<ConfigAiAutoEmbeddings>;
-  openai: ConfigAiOpenai;
+  google?: Maybe<ConfigAiGoogle>;
+  openai?: Maybe<ConfigAiOpenai>;
   resources: ConfigAiResources;
   version?: Maybe<Scalars['String']>;
+  webSearch?: Maybe<ConfigAiWebSearch>;
   webhookSecret: Scalars['String'];
+};
+
+export type ConfigAiAnthropic = {
+  __typename?: 'ConfigAIAnthropic';
+  apiKey: Scalars['String'];
+};
+
+export type ConfigAiAnthropicComparisonExp = {
+  _and?: InputMaybe<Array<ConfigAiAnthropicComparisonExp>>;
+  _not?: InputMaybe<ConfigAiAnthropicComparisonExp>;
+  _or?: InputMaybe<Array<ConfigAiAnthropicComparisonExp>>;
+  apiKey?: InputMaybe<ConfigStringComparisonExp>;
+};
+
+export type ConfigAiAnthropicInsertInput = {
+  apiKey: Scalars['String'];
+};
+
+export type ConfigAiAnthropicUpdateInput = {
+  apiKey?: InputMaybe<Scalars['String']>;
 };
 
 export type ConfigAiAutoEmbeddings = {
@@ -110,18 +133,44 @@ export type ConfigAiComparisonExp = {
   _and?: InputMaybe<Array<ConfigAiComparisonExp>>;
   _not?: InputMaybe<ConfigAiComparisonExp>;
   _or?: InputMaybe<Array<ConfigAiComparisonExp>>;
+  anthropic?: InputMaybe<ConfigAiAnthropicComparisonExp>;
   autoEmbeddings?: InputMaybe<ConfigAiAutoEmbeddingsComparisonExp>;
+  google?: InputMaybe<ConfigAiGoogleComparisonExp>;
   openai?: InputMaybe<ConfigAiOpenaiComparisonExp>;
   resources?: InputMaybe<ConfigAiResourcesComparisonExp>;
   version?: InputMaybe<ConfigStringComparisonExp>;
+  webSearch?: InputMaybe<ConfigAiWebSearchComparisonExp>;
   webhookSecret?: InputMaybe<ConfigStringComparisonExp>;
 };
 
+export type ConfigAiGoogle = {
+  __typename?: 'ConfigAIGoogle';
+  apiKey: Scalars['String'];
+};
+
+export type ConfigAiGoogleComparisonExp = {
+  _and?: InputMaybe<Array<ConfigAiGoogleComparisonExp>>;
+  _not?: InputMaybe<ConfigAiGoogleComparisonExp>;
+  _or?: InputMaybe<Array<ConfigAiGoogleComparisonExp>>;
+  apiKey?: InputMaybe<ConfigStringComparisonExp>;
+};
+
+export type ConfigAiGoogleInsertInput = {
+  apiKey: Scalars['String'];
+};
+
+export type ConfigAiGoogleUpdateInput = {
+  apiKey?: InputMaybe<Scalars['String']>;
+};
+
 export type ConfigAiInsertInput = {
+  anthropic?: InputMaybe<ConfigAiAnthropicInsertInput>;
   autoEmbeddings?: InputMaybe<ConfigAiAutoEmbeddingsInsertInput>;
-  openai: ConfigAiOpenaiInsertInput;
+  google?: InputMaybe<ConfigAiGoogleInsertInput>;
+  openai?: InputMaybe<ConfigAiOpenaiInsertInput>;
   resources: ConfigAiResourcesInsertInput;
   version?: InputMaybe<Scalars['String']>;
+  webSearch?: InputMaybe<ConfigAiWebSearchInsertInput>;
   webhookSecret: Scalars['String'];
 };
 
@@ -170,11 +219,38 @@ export type ConfigAiResourcesUpdateInput = {
 };
 
 export type ConfigAiUpdateInput = {
+  anthropic?: InputMaybe<ConfigAiAnthropicUpdateInput>;
   autoEmbeddings?: InputMaybe<ConfigAiAutoEmbeddingsUpdateInput>;
+  google?: InputMaybe<ConfigAiGoogleUpdateInput>;
   openai?: InputMaybe<ConfigAiOpenaiUpdateInput>;
   resources?: InputMaybe<ConfigAiResourcesUpdateInput>;
   version?: InputMaybe<Scalars['String']>;
+  webSearch?: InputMaybe<ConfigAiWebSearchUpdateInput>;
   webhookSecret?: InputMaybe<Scalars['String']>;
+};
+
+export type ConfigAiWebSearch = {
+  __typename?: 'ConfigAIWebSearch';
+  braveApiKey?: Maybe<Scalars['String']>;
+  tavilyApiKey?: Maybe<Scalars['String']>;
+};
+
+export type ConfigAiWebSearchComparisonExp = {
+  _and?: InputMaybe<Array<ConfigAiWebSearchComparisonExp>>;
+  _not?: InputMaybe<ConfigAiWebSearchComparisonExp>;
+  _or?: InputMaybe<Array<ConfigAiWebSearchComparisonExp>>;
+  braveApiKey?: InputMaybe<ConfigStringComparisonExp>;
+  tavilyApiKey?: InputMaybe<ConfigStringComparisonExp>;
+};
+
+export type ConfigAiWebSearchInsertInput = {
+  braveApiKey?: InputMaybe<Scalars['String']>;
+  tavilyApiKey?: InputMaybe<Scalars['String']>;
+};
+
+export type ConfigAiWebSearchUpdateInput = {
+  braveApiKey?: InputMaybe<Scalars['String']>;
+  tavilyApiKey?: InputMaybe<Scalars['String']>;
 };
 
 export type ConfigAppConfig = {
@@ -30829,7 +30905,7 @@ export type GetAiSettingsQueryVariables = Exact<{
 }>;
 
 
-export type GetAiSettingsQuery = { __typename?: 'query_root', config?: { __typename?: 'ConfigConfig', postgres: { __typename?: 'ConfigPostgres', version?: string | null }, ai?: { __typename?: 'ConfigAI', version?: string | null, webhookSecret: string, autoEmbeddings?: { __typename?: 'ConfigAIAutoEmbeddings', synchPeriodMinutes?: any | null } | null, openai: { __typename?: 'ConfigAIOpenai', apiKey: string, organization?: string | null }, resources: { __typename?: 'ConfigAIResources', compute: { __typename?: 'ConfigComputeResources', cpu: any, memory: any } } } | null } | null };
+export type GetAiSettingsQuery = { __typename?: 'query_root', config?: { __typename?: 'ConfigConfig', postgres: { __typename?: 'ConfigPostgres', version?: string | null }, ai?: { __typename?: 'ConfigAI', version?: string | null, webhookSecret: string, autoEmbeddings?: { __typename?: 'ConfigAIAutoEmbeddings', synchPeriodMinutes?: any | null } | null, openai?: { __typename?: 'ConfigAIOpenai', apiKey: string, organization?: string | null } | null, resources: { __typename?: 'ConfigAIResources', compute: { __typename?: 'ConfigComputeResources', cpu: any, memory: any } } } | null } | null };
 
 export type GetAuthenticationSettingsQueryVariables = Exact<{
   appId: Scalars['uuid'];
@@ -31155,7 +31231,7 @@ export type UpdateConfigMutationVariables = Exact<{
 }>;
 
 
-export type UpdateConfigMutation = { __typename?: 'mutation_root', updateConfig: { __typename?: 'ConfigConfig', id: 'ConfigConfig', postgres: { __typename?: 'ConfigPostgres', resources: { __typename?: 'ConfigPostgresResources', enablePublicAccess?: boolean | null, allowedCIDRs?: Array<string> | null, storage: { __typename?: 'ConfigPostgresResourcesStorage', capacity: any } } }, ai?: { __typename?: 'ConfigAI', version?: string | null, webhookSecret: string, autoEmbeddings?: { __typename?: 'ConfigAIAutoEmbeddings', synchPeriodMinutes?: any | null } | null, openai: { __typename?: 'ConfigAIOpenai', organization?: string | null, apiKey: string }, resources: { __typename?: 'ConfigAIResources', compute: { __typename?: 'ConfigComputeResources', cpu: any, memory: any } } } | null } };
+export type UpdateConfigMutation = { __typename?: 'mutation_root', updateConfig: { __typename?: 'ConfigConfig', id: 'ConfigConfig', postgres: { __typename?: 'ConfigPostgres', resources: { __typename?: 'ConfigPostgresResources', enablePublicAccess?: boolean | null, allowedCIDRs?: Array<string> | null, storage: { __typename?: 'ConfigPostgresResourcesStorage', capacity: any } } }, ai?: { __typename?: 'ConfigAI', version?: string | null, webhookSecret: string, autoEmbeddings?: { __typename?: 'ConfigAIAutoEmbeddings', synchPeriodMinutes?: any | null } | null, openai?: { __typename?: 'ConfigAIOpenai', organization?: string | null, apiKey: string } | null, resources: { __typename?: 'ConfigAIResources', compute: { __typename?: 'ConfigComputeResources', cpu: any, memory: any } } } | null } };
 
 export type UpdateDatabaseVersionMutationVariables = Exact<{
   appId: Scalars['uuid'];
@@ -31371,7 +31447,6 @@ export type GetFunctionsLogsQueryVariables = Exact<{
   from: Scalars['Timestamp'];
   to?: InputMaybe<Scalars['Timestamp']>;
   path: Scalars['String'];
-  regexFilter?: InputMaybe<Scalars['String']>;
 }>;
 
 
@@ -35813,14 +35888,8 @@ export function refetchGetGithubRepositoriesQuery(variables?: GetGithubRepositor
       return { query: GetGithubRepositoriesDocument, variables: variables }
     }
 export const GetFunctionsLogsDocument = gql`
-    query getFunctionsLogs($appID: String!, $from: Timestamp!, $to: Timestamp, $path: String!, $regexFilter: String) {
-  getFunctionsLogs(
-    appID: $appID
-    from: $from
-    to: $to
-    path: $path
-    regexFilter: $regexFilter
-  ) {
+    query getFunctionsLogs($appID: String!, $from: Timestamp!, $to: Timestamp, $path: String!) {
+  getFunctionsLogs(appID: $appID, from: $from, to: $to, path: $path) {
     timestamp
     service
     log
@@ -35844,7 +35913,6 @@ export const GetFunctionsLogsDocument = gql`
  *      from: // value for 'from'
  *      to: // value for 'to'
  *      path: // value for 'path'
- *      regexFilter: // value for 'regexFilter'
  *   },
  * });
  */
@@ -35864,12 +35932,7 @@ export function refetchGetFunctionsLogsQuery(variables: GetFunctionsLogsQueryVar
     }
 export const GetFunctionsLogsSubscriptionDocument = gql`
     subscription getFunctionsLogsSubscription($appID: String!, $from: Timestamp!, $path: String!, $regexFilter: String) {
-  getFunctionsLogs(
-    appID: $appID
-    from: $from
-    path: $path
-    regexFilter: $regexFilter
-  ) {
+  getFunctionsLogs(appID: $appID, from: $from, path: $path) {
     timestamp
     service
     log
