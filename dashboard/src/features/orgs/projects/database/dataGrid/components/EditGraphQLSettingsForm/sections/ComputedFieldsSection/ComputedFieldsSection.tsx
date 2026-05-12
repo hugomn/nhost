@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useDialog } from '@/components/common/DialogProvider';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/v3/alert';
 import { useDatabaseQuery } from '@/features/orgs/projects/database/dataGrid/hooks/useDatabaseQuery';
 import { usePostgresFunctionsQuery } from '@/features/orgs/projects/database/dataGrid/hooks/usePostgresFunctionsQuery';
@@ -9,13 +10,13 @@ import ComputedFieldsSectionShell from './ComputedFieldsSectionShell';
 import ComputedFieldsSectionSkeleton from './ComputedFieldsSectionSkeleton';
 
 const DEFAULT_SOURCE = 'default';
+const DIRTY_SOURCE_ID = 'edit-gql-computed-fields';
 
 export interface ComputedFieldsSectionProps {
   disabled?: boolean;
   isUntracked?: boolean;
   schema: string;
   tableName: string;
-  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export default function ComputedFieldsSection({
@@ -23,8 +24,8 @@ export default function ComputedFieldsSection({
   isUntracked,
   schema,
   tableName,
-  onDirtyChange,
 }: ComputedFieldsSectionProps) {
+  const { setDirtySource } = useDialog();
   const table = { name: tableName, schema };
 
   const {
@@ -70,12 +71,11 @@ export default function ComputedFieldsSection({
   }, []);
 
   useEffect(() => {
-    if (!isAnyChildDirty) {
-      return undefined;
-    }
-    onDirtyChange?.(true);
-    return () => onDirtyChange?.(false);
-  }, [isAnyChildDirty, onDirtyChange]);
+    setDirtySource(DIRTY_SOURCE_ID, isAnyChildDirty);
+    return () => {
+      setDirtySource(DIRTY_SOURCE_ID, false);
+    };
+  }, [isAnyChildDirty, setDirtySource]);
 
   const handleRowOpenChange = (name: string) => (open: boolean) => {
     if (open) {
