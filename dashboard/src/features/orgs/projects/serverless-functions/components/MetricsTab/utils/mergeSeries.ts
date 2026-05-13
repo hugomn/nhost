@@ -32,10 +32,11 @@ export function mergeSeries(
     const map = new Map<number, number>();
     const len = Math.min(s.timestamps.length, s.datapoints.length);
     for (let i = 0; i < len; i += 1) {
-      const ts = Number.parseInt(s.timestamps[i], 10);
+      // bragi returns ISO 8601 timestamps via the `Timestamp` scalar.
+      const ts = new Date(s.timestamps[i]).getTime();
       const value = s.datapoints[i];
       if (!Number.isNaN(ts) && typeof value === 'number') {
-        map.set(ts * 1000, value);
+        map.set(ts, value);
       }
     }
     maps.push(map);

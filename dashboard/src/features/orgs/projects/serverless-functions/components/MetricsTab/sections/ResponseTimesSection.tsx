@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import ExpandablePanelCard from '@/features/orgs/projects/serverless-functions/components/MetricsTab/components/ExpandablePanelCard';
 import MetricChart from '@/features/orgs/projects/serverless-functions/components/MetricsTab/components/MetricChart';
 import { colorForMethod } from '@/features/orgs/projects/serverless-functions/components/MetricsTab/constants';
@@ -28,6 +29,12 @@ export default function ResponseTimesSection({
   avg,
   onExpand,
 }: ResponseTimesSectionProps) {
+  // TODO(dbm): remove once response-time chart labels are verified.
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[ResponseTimesSection]', { max, p95, p75, avg });
+  }, [max, p95, p75, avg]);
+
   const panels: Array<{
     data: MetricPanelResponse;
     slug: MetricPanelSlug;

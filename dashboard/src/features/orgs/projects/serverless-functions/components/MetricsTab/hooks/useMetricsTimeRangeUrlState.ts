@@ -28,19 +28,21 @@ function isValidIso(value: string): boolean {
 
 export default function useMetricsTimeRangeUrlState(): MetricsTimeRangeUrlState {
   const router = useRouter();
+  // Read each relevant key individually so unrelated URL changes (e.g. opening a
+  // panel via the eye icon) don't churn `range`'s identity and trigger refetches.
+  const rangeParam = readSingle(router.query[RANGE_KEY]);
+  const fromParam = readSingle(router.query[FROM_KEY]);
+  const toParam = readSingle(router.query[TO_KEY]);
 
   const range = useMemo<MetricsTimeRange>(() => {
-    const preset = readSingle(router.query[RANGE_KEY]);
-    if (preset && isMetricsRangePreset(preset)) {
-      return { kind: 'preset', preset };
+    if (rangeParam && isMetricsRangePreset(rangeParam)) {
+      return { kind: 'preset', preset: rangeParam };
     }
-    const from = readSingle(router.query[FROM_KEY]);
-    const to = readSingle(router.query[TO_KEY]);
-    if (from && to && isValidIso(from) && isValidIso(to)) {
-      return { kind: 'absolute', from, to };
+    if (fromParam && toParam && isValidIso(fromParam) && isValidIso(toParam)) {
+      return { kind: 'absolute', from: fromParam, to: toParam };
     }
     return DEFAULT_METRICS_TIME_RANGE;
-  }, [router.query]);
+  }, [rangeParam, fromParam, toParam]);
 
   const setRange = useCallback(
     (next: MetricsTimeRange) => {

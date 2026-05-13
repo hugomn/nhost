@@ -31,6 +31,7 @@ export type Scalars = {
   citext: any;
   float64: any;
   jsonb: any;
+  labels: any;
   map: any;
   smallint: any;
   timestamptz: any;
@@ -3377,6 +3378,82 @@ export type ContainerError = {
   __typename?: 'ContainerError';
   lastError: LastError;
   name: Scalars['String'];
+};
+
+/**
+ * How to aggregate the chosen `FunctionsMetric`.
+ *
+ * `AVG` is implemented as a per-request ratio: `sum(metric) / sum(invocations)`.
+ * This means `AVG/BYTES_SENT` is the average response size, `AVG/DURATION` is
+ * the average response time, and `AVG/ERRORS` is the error rate.
+ *
+ * Not every combination is meaningful:
+ * - `INVOCATIONS + AVG` is rejected at runtime (the ratio is always 1).
+ * - `MAX` and `MIN` are only supported by `getFunctionsInstantMetric`. They
+ *   evaluate over the whole `from`/`to` window. The range resolver rejects them
+ *   because the lookback window is not yet configurable.
+ */
+export enum FunctionsAggregate {
+  /** Per-request average: `sum(metric) / sum(invocations)`. Not valid for `metric: INVOCATIONS`. */
+  Avg = 'AVG',
+  /** Peak rate observed during the selected window. Instant-only. */
+  Max = 'MAX',
+  /** Trough rate observed during the selected window. Instant-only. */
+  Min = 'MIN',
+  /** Sum the metric over the selected window. */
+  Sum = 'SUM'
+}
+
+/** The underlying quantity to query from the functions histogram backend. */
+export enum FunctionsHistogramMetric {
+  /** Function execution time histogram, in seconds. */
+  Duration = 'DURATION'
+}
+
+/**
+ * Labels that may be passed to `groupBy` to split a metric into one series per
+ * label value. Labels not listed here are summed across by default.
+ */
+export enum FunctionsLabel {
+  /** HTTP method of the request (GET, POST, ...). */
+  Method = 'METHOD',
+  /** HTTP status code of the response. */
+  Status = 'STATUS'
+}
+
+/** The underlying quantity to query from the functions metrics backend. */
+export enum FunctionsMetric {
+  /** Total response bytes sent by functions. */
+  BytesSent = 'BYTES_SENT',
+  /** Cumulative function execution time, in seconds. */
+  Duration = 'DURATION',
+  /** Number of invocations that returned a 4xx or 5xx status. */
+  Errors = 'ERRORS',
+  /** Number of function invocations (request count). */
+  Invocations = 'INVOCATIONS'
+}
+
+/**
+ * A time series for a functions metric. `timestamps` and `datapoints` are
+ * parallel arrays of the same length. `labels` carries the values of the
+ * dimensions left intact by `groupBy`.
+ */
+export type FunctionsMetricSeries = {
+  __typename?: 'FunctionsMetricSeries';
+  datapoints: Array<Scalars['float64']>;
+  labels: Scalars['labels'];
+  timestamps: Array<Scalars['Timestamp']>;
+};
+
+/**
+ * A single aggregated value for a functions metric, optionally tagged with the
+ * labels left intact by `groupBy` (e.g. `{method: "GET"}`). When no `groupBy` is
+ * provided exactly one item is returned with empty labels.
+ */
+export type FunctionsMetricValue = {
+  __typename?: 'FunctionsMetricValue';
+  labels: Scalars['labels'];
+  value: Scalars['float64'];
 };
 
 export type InsertRunServiceConfigResponse = {
@@ -22130,12 +22207,38 @@ export type Query_Root = {
   getCPUSecondsUsage: Metrics;
   getEgressVolume: Metrics;
   getFunctionsDuration: Metrics;
+  /**
+   * Returns a time series of the given `percentile` of `metric` over the
+   * selected window. `percentile` must be in `[0, 1]`. `route` is a regex
+   * matched against the function route.
+   */
+  getFunctionsHistogramMetric: Array<FunctionsMetricSeries>;
+  /**
+   * Returns a single aggregated value for `metric` over the selected window
+   * (`from`/`to`, defaulting to the last hour). `groupBy` returns one item per
+   * combination of label values; without it the result has exactly one item
+   * with empty labels. `route` is a regex matched against the function route.
+   *
+   * All four `FunctionsAggregate` values are supported. `INVOCATIONS + AVG`
+   * is rejected (always evaluates to 1).
+   */
+  getFunctionsInstantMetric: Array<FunctionsMetricValue>;
   getFunctionsInvocations: Metrics;
   /**
    * Returns functions logs for a given application, filtered by function path.
    * If `from` and `to` are not provided, they default to an hour ago and now, respectively.
    */
   getFunctionsLogs: Array<Log>;
+  /**
+   * Returns a time series for `metric` over the selected window. `groupBy`
+   * returns one series per combination of label values. `route` is a regex
+   * matched against the function route.
+   *
+   * Only `SUM` and `AVG` aggregates are supported. `MAX`/`MIN` are rejected
+   * — use `getFunctionsInstantMetric` for peak/trough values. `INVOCATIONS +
+   * AVG` is also rejected (always evaluates to 1).
+   */
+  getFunctionsRangeMetric: Array<FunctionsMetricSeries>;
   getLogsVolume: Metrics;
   getPiTRBaseBackups: Array<PiTrBaseBackup>;
   /**
@@ -23187,6 +23290,27 @@ export type Query_RootGetFunctionsDurationArgs = {
 };
 
 
+export type Query_RootGetFunctionsHistogramMetricArgs = {
+  appID: Scalars['String'];
+  from?: InputMaybe<Scalars['Timestamp']>;
+  metric: FunctionsHistogramMetric;
+  percentile: Scalars['float64'];
+  route: Scalars['String'];
+  to?: InputMaybe<Scalars['Timestamp']>;
+};
+
+
+export type Query_RootGetFunctionsInstantMetricArgs = {
+  aggregate: FunctionsAggregate;
+  appID: Scalars['String'];
+  from?: InputMaybe<Scalars['Timestamp']>;
+  groupBy?: InputMaybe<Array<FunctionsLabel>>;
+  metric: FunctionsMetric;
+  route: Scalars['String'];
+  to?: InputMaybe<Scalars['Timestamp']>;
+};
+
+
 export type Query_RootGetFunctionsInvocationsArgs = {
   appID: Scalars['String'];
   from?: InputMaybe<Scalars['Timestamp']>;
@@ -23199,6 +23323,17 @@ export type Query_RootGetFunctionsLogsArgs = {
   from?: InputMaybe<Scalars['Timestamp']>;
   path: Scalars['String'];
   regexFilter?: InputMaybe<Scalars['String']>;
+  to?: InputMaybe<Scalars['Timestamp']>;
+};
+
+
+export type Query_RootGetFunctionsRangeMetricArgs = {
+  aggregate: FunctionsAggregate;
+  appID: Scalars['String'];
+  from?: InputMaybe<Scalars['Timestamp']>;
+  groupBy?: InputMaybe<Array<FunctionsLabel>>;
+  metric: FunctionsMetric;
+  route: Scalars['String'];
   to?: InputMaybe<Scalars['Timestamp']>;
 };
 
@@ -31359,6 +31494,16 @@ export type AppStateHistoryFragment = { __typename?: 'appStateHistory', id: any,
 
 export type ProjectFragment = { __typename?: 'apps', id: any, slug: string, name: string, repositoryProductionBranch: string, subdomain: string, createdAt: any, desiredState: number, nhostBaseFolder: string, automaticDeploys: boolean, config?: { __typename?: 'ConfigConfig', observability: { __typename?: 'ConfigObservability', grafana: { __typename?: 'ConfigGrafana', adminPassword: string } }, hasura: { __typename?: 'ConfigHasura', adminSecret: string, settings?: { __typename?: 'ConfigHasuraSettings', enableConsole?: boolean | null } | null }, ai?: { __typename?: 'ConfigAI', version?: string | null } | null } | null, featureFlags: Array<{ __typename?: 'featureFlags', description: string, id: any, name: string, value: string }>, appStates: Array<{ __typename?: 'appStateHistory', id: any, appId: any, message?: string | null, stateId: number, createdAt: any }>, region: { __typename?: 'regions', id: any, countryCode: string, name: string, domain: string, city: string }, legacyPlan?: { __typename?: 'plans', id: any, name: string, price: number, isFree: boolean, featureMaxDbSize: number } | null, githubRepository?: { __typename?: 'githubRepositories', fullName: string } | null, deployments: Array<{ __typename?: 'deployments', id: any, commitSHA: string, commitMessage?: string | null, commitUserName?: string | null, deploymentStartedAt?: any | null, deploymentEndedAt?: any | null, commitUserAvatarUrl?: string | null, deploymentStatus?: string | null }>, pipelineRuns: Array<{ __typename?: 'pipelineRuns', id: any, name: string, startedAt?: any | null, endedAt?: any | null, status: PipelineRunStatus_Enum, input: any, appId?: any | null, createdAt: any }>, creator?: { __typename?: 'users', id: any, email?: any | null, displayName: string } | null };
 
+export type GetFunctionsMetricsDashboardQueryVariables = Exact<{
+  appID: Scalars['String'];
+  route: Scalars['String'];
+  from?: InputMaybe<Scalars['Timestamp']>;
+  to?: InputMaybe<Scalars['Timestamp']>;
+}>;
+
+
+export type GetFunctionsMetricsDashboardQuery = { __typename?: 'query_root', totalInvocations: Array<{ __typename?: 'FunctionsMetricValue', labels: any, value: any }>, totalBytesSent: Array<{ __typename?: 'FunctionsMetricValue', labels: any, value: any }>, totalDuration: Array<{ __typename?: 'FunctionsMetricValue', labels: any, value: any }>, totalErrors: Array<{ __typename?: 'FunctionsMetricValue', labels: any, value: any }>, invocations: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, responseStatus: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, averageResponseSize: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, averageResponseTime: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, errorRate: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, durationP75: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, durationP95: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }>, durationMax: Array<{ __typename?: 'FunctionsMetricSeries', labels: any, timestamps: Array<any>, datapoints: Array<any> }> };
+
 export type GithubRepositoryFragment = { __typename?: 'githubRepositories', id: any, name: string, fullName: string, private: boolean, githubAppInstallation: { __typename?: 'githubAppInstallations', id: any, accountLogin?: string | null, accountType?: string | null, accountAvatarUrl?: string | null } };
 
 export type GetGithubRepositoriesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -35769,6 +35914,190 @@ export function useUpdateBucketMutation(baseOptions?: Apollo.MutationHookOptions
 export type UpdateBucketMutationHookResult = ReturnType<typeof useUpdateBucketMutation>;
 export type UpdateBucketMutationResult = Apollo.MutationResult<UpdateBucketMutation>;
 export type UpdateBucketMutationOptions = Apollo.BaseMutationOptions<UpdateBucketMutation, UpdateBucketMutationVariables>;
+export const GetFunctionsMetricsDashboardDocument = gql`
+    query getFunctionsMetricsDashboard($appID: String!, $route: String!, $from: Timestamp, $to: Timestamp) {
+  totalInvocations: getFunctionsInstantMetric(
+    metric: INVOCATIONS
+    aggregate: SUM
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    value
+  }
+  totalBytesSent: getFunctionsInstantMetric(
+    metric: BYTES_SENT
+    aggregate: SUM
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    value
+  }
+  totalDuration: getFunctionsInstantMetric(
+    metric: DURATION
+    aggregate: SUM
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    value
+  }
+  totalErrors: getFunctionsInstantMetric(
+    metric: ERRORS
+    aggregate: SUM
+    groupBy: [METHOD, STATUS]
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    value
+  }
+  invocations: getFunctionsRangeMetric(
+    metric: INVOCATIONS
+    aggregate: SUM
+    groupBy: [METHOD]
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  responseStatus: getFunctionsRangeMetric(
+    metric: INVOCATIONS
+    aggregate: SUM
+    groupBy: [STATUS]
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  averageResponseSize: getFunctionsRangeMetric(
+    metric: BYTES_SENT
+    aggregate: AVG
+    groupBy: [METHOD]
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  averageResponseTime: getFunctionsRangeMetric(
+    metric: DURATION
+    aggregate: AVG
+    groupBy: [METHOD]
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  errorRate: getFunctionsRangeMetric(
+    metric: ERRORS
+    aggregate: AVG
+    groupBy: [METHOD]
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  durationP75: getFunctionsHistogramMetric(
+    metric: DURATION
+    percentile: 0.75
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  durationP95: getFunctionsHistogramMetric(
+    metric: DURATION
+    percentile: 0.95
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+  durationMax: getFunctionsHistogramMetric(
+    metric: DURATION
+    percentile: 1.0
+    appID: $appID
+    route: $route
+    from: $from
+    to: $to
+  ) {
+    labels
+    timestamps
+    datapoints
+  }
+}
+    `;
+
+/**
+ * __useGetFunctionsMetricsDashboardQuery__
+ *
+ * To run a query within a React component, call `useGetFunctionsMetricsDashboardQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetFunctionsMetricsDashboardQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetFunctionsMetricsDashboardQuery({
+ *   variables: {
+ *      appID: // value for 'appID'
+ *      route: // value for 'route'
+ *      from: // value for 'from'
+ *      to: // value for 'to'
+ *   },
+ * });
+ */
+export function useGetFunctionsMetricsDashboardQuery(baseOptions: Apollo.QueryHookOptions<GetFunctionsMetricsDashboardQuery, GetFunctionsMetricsDashboardQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetFunctionsMetricsDashboardQuery, GetFunctionsMetricsDashboardQueryVariables>(GetFunctionsMetricsDashboardDocument, options);
+      }
+export function useGetFunctionsMetricsDashboardLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetFunctionsMetricsDashboardQuery, GetFunctionsMetricsDashboardQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetFunctionsMetricsDashboardQuery, GetFunctionsMetricsDashboardQueryVariables>(GetFunctionsMetricsDashboardDocument, options);
+        }
+export type GetFunctionsMetricsDashboardQueryHookResult = ReturnType<typeof useGetFunctionsMetricsDashboardQuery>;
+export type GetFunctionsMetricsDashboardLazyQueryHookResult = ReturnType<typeof useGetFunctionsMetricsDashboardLazyQuery>;
+export type GetFunctionsMetricsDashboardQueryResult = Apollo.QueryResult<GetFunctionsMetricsDashboardQuery, GetFunctionsMetricsDashboardQueryVariables>;
+export function refetchGetFunctionsMetricsDashboardQuery(variables: GetFunctionsMetricsDashboardQueryVariables) {
+      return { query: GetFunctionsMetricsDashboardDocument, variables: variables }
+    }
 export const GetGithubRepositoriesDocument = gql`
     query getGithubRepositories {
   githubRepositories {
