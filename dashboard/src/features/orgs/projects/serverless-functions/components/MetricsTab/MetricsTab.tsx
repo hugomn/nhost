@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { useCallback } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -15,6 +16,7 @@ import ErrorsSection from '@/features/orgs/projects/serverless-functions/compone
 import GeneralSection from '@/features/orgs/projects/serverless-functions/components/MetricsTab/sections/GeneralSection';
 import ResponseTimesSection from '@/features/orgs/projects/serverless-functions/components/MetricsTab/sections/ResponseTimesSection';
 import SummarySection from '@/features/orgs/projects/serverless-functions/components/MetricsTab/sections/SummarySection';
+import { DEFAULT_METRICS_TIME_RANGE } from '@/features/orgs/projects/serverless-functions/components/MetricsTab/timeRange';
 import { useFunctionMetrics } from '@/features/orgs/projects/serverless-functions/hooks/useFunctionMetrics';
 import type { NhostFunction } from '@/features/orgs/projects/serverless-functions/types';
 import { cn } from '@/lib/utils';
@@ -55,6 +57,21 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
   });
   const { openPanel, filter, open, close, setFilter } =
     useMetricsPanelUrlState();
+
+  const handleZoomRange = useCallback(
+    (fromMs: number, toMs: number) => {
+      setRange({
+        kind: 'absolute',
+        from: new Date(fromMs).toISOString(),
+        to: new Date(toMs).toISOString(),
+      });
+    },
+    [setRange],
+  );
+
+  const handleZoomReset = useCallback(() => {
+    setRange(DEFAULT_METRICS_TIME_RANGE);
+  }, [setRange]);
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -102,6 +119,8 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
                   averageResponseSize={data.general.averageResponseSize}
                   totalRequests={data.general.totalRequests}
                   onExpand={open}
+                  onZoomRange={handleZoomRange}
+                  onZoomReset={handleZoomReset}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -115,6 +134,8 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
                   p75={data.responseTimes.p75}
                   avg={data.responseTimes.avg}
                   onExpand={open}
+                  onZoomRange={handleZoomRange}
+                  onZoomReset={handleZoomReset}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -126,6 +147,8 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
                   errorRate={data.errors.errorRate}
                   totalErrors={data.errors.totalErrors}
                   onExpand={open}
+                  onZoomRange={handleZoomRange}
+                  onZoomReset={handleZoomReset}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -137,6 +160,8 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
             metrics={data}
             onClose={close}
             onFilterChange={setFilter}
+            onZoomRange={handleZoomRange}
+            onZoomReset={handleZoomReset}
           />
         </>
       )}

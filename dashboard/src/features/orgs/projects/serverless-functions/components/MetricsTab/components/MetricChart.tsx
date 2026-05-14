@@ -39,18 +39,8 @@ export interface MetricChartProps {
   connectNulls?: boolean;
   height?: number;
   className?: string;
-}
-
-type XDomainBound = number | 'dataMin' | 'dataMax';
-type YDomainBound = number | 'auto';
-
-interface ZoomState {
-  refAreaLeft: number | '';
-  refAreaRight: number | '';
-  left: XDomainBound;
-  right: XDomainBound;
-  bottom: YDomainBound;
-  top: YDomainBound;
+  onZoomRange?: (fromMs: number, toMs: number) => void;
+  onZoomReset?: () => void;
 }
 
 interface PinnedState {
@@ -78,14 +68,9 @@ interface PinnedPayloadEntry {
   type?: string;
 }
 
-const INITIAL_ZOOM: ZoomState = {
-  refAreaLeft: '',
-  refAreaRight: '',
-  left: 'dataMin',
-  right: 'dataMax',
-  bottom: 'auto',
-  top: 'auto',
-};
+// Ignore drag selections shorter than this — prevents accidental hairline
+// zooms from a near-zero drag distance.
+const MIN_ZOOM_RANGE_MS = 10_000;
 
 export default function MetricChart({
   kind = 'line',
@@ -97,6 +82,8 @@ export default function MetricChart({
   connectNulls = false,
   height = 260,
   className,
+  onZoomRange,
+  onZoomReset,
 }: MetricChartProps) {
   const { keys, rows } = useMemo(
     () => mergeSeries(data, seriesKeyFor),
@@ -113,8 +100,8 @@ export default function MetricChart({
     [data, seriesKeyFor, seriesLabelFor, colorFor],
   );
 
-  const [zoomState, setZoomState] = useState<ZoomState>(INITIAL_ZOOM);
-  const { refAreaLeft, refAreaRight, left, right, bottom, top } = zoomState;
+  const [refAreaLeft, setRefAreaLeft] = useState<number | ''>('');
+  const [refAreaRight, setRefAreaRight] = useState<number | ''>('');
 
   const [pinned, setPinned] = useState<PinnedState | null>(null);
   const chartWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -139,7 +126,8 @@ export default function MetricChart({
     if (v === null) {
       return;
     }
-    setZoomState((prev) => ({ ...prev, refAreaLeft: v, refAreaRight: '' }));
+    setRefAreaLeft(v);
+    setRefAreaRight('');
   };
 
   const handleMouseMove = (e: ChartMouseEvent) => {
@@ -150,35 +138,23 @@ export default function MetricChart({
     if (v === null) {
       return;
     }
-    setZoomState((prev) => ({ ...prev, refAreaRight: v }));
+    setRefAreaRight(v);
   };
 
   const handleMouseUp = () => {
-    setZoomState((prev) => {
-      let ll = prev.refAreaLeft;
-      let rr = prev.refAreaRight;
-      if (ll === '' || rr === '' || ll === rr) {
-        return { ...prev, refAreaLeft: '', refAreaRight: '' };
-      }
-      if (ll > rr) {
-        [ll, rr] = [rr, ll];
-      }
-      const [nextBottom, nextTop] = computeYDomain(
-        rows,
-        keys,
-        ll as number,
-        rr as number,
-      );
-      setPinned(null);
-      return {
-        refAreaLeft: '',
-        refAreaRight: '',
-        left: ll,
-        right: rr,
-        bottom: nextBottom,
-        top: nextTop,
-      };
-    });
+    const ll = refAreaLeft;
+    const rr = refAreaRight;
+    setRefAreaLeft('');
+    setRefAreaRight('');
+    if (ll === '' || rr === '' || ll === rr) {
+      return;
+    }
+    const [from, to] = ll < rr ? [ll, rr] : [rr, ll];
+    if (to - from < MIN_ZOOM_RANGE_MS) {
+      return;
+    }
+    setPinned(null);
+    onZoomRange?.(from, to);
   };
 
   const handleClick = (
@@ -229,8 +205,8 @@ export default function MetricChart({
   };
 
   const handleDoubleClick = () => {
-    setZoomState(INITIAL_ZOOM);
     setPinned(null);
+    onZoomReset?.();
   };
 
   const chartProps = {
@@ -267,8 +243,7 @@ export default function MetricChart({
                   dataKey="timestamp"
                   type="number"
                   scale="time"
-                  domain={[left, right]}
-                  allowDataOverflow
+                  domain={['dataMin', 'dataMax']}
                   tickFormatter={formatTimestampTick}
                   tickLine={false}
                   axisLine={false}
@@ -278,8 +253,6 @@ export default function MetricChart({
                   tickLine={false}
                   axisLine={false}
                   width={48}
-                  domain={[bottom, top]}
-                  allowDataOverflow
                   tickFormatter={
                     valueFormatter
                       ? (v) => valueFormatter(Number(v))
@@ -322,8 +295,7 @@ export default function MetricChart({
                   dataKey="timestamp"
                   type="number"
                   scale="time"
-                  domain={[left, right]}
-                  allowDataOverflow
+                  domain={['dataMin', 'dataMax']}
                   tickFormatter={formatTimestampTick}
                   tickLine={false}
                   axisLine={false}
@@ -333,8 +305,6 @@ export default function MetricChart({
                   tickLine={false}
                   axisLine={false}
                   width={48}
-                  domain={[bottom, top]}
-                  allowDataOverflow
                   tickFormatter={
                     valueFormatter
                       ? (v) => valueFormatter(Number(v))
@@ -551,35 +521,4 @@ function toNumber(input: unknown): number | null {
   }
   const n = typeof input === 'number' ? input : Number(input);
   return Number.isFinite(n) ? n : null;
-}
-
-function computeYDomain(
-  rows: Array<Record<string, number | null> & { timestamp: number }>,
-  keys: string[],
-  xMin: number,
-  xMax: number,
-): [YDomainBound, YDomainBound] {
-  let min = Number.POSITIVE_INFINITY;
-  let max = Number.NEGATIVE_INFINITY;
-  for (const row of rows) {
-    if (row.timestamp < xMin || row.timestamp > xMax) {
-      continue;
-    }
-    for (const key of keys) {
-      const v = row[key];
-      if (typeof v === 'number' && Number.isFinite(v)) {
-        if (v < min) {
-          min = v;
-        }
-        if (v > max) {
-          max = v;
-        }
-      }
-    }
-  }
-  if (!Number.isFinite(min) || !Number.isFinite(max)) {
-    return ['auto', 'auto'];
-  }
-  const pad = (max - min) * 0.1 || Math.max(Math.abs(max) * 0.1, 1);
-  return [min - pad, max + pad];
 }

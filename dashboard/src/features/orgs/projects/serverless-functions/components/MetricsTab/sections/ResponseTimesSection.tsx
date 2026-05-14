@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import ExpandablePanelCard from '@/features/orgs/projects/serverless-functions/components/MetricsTab/components/ExpandablePanelCard';
 import MetricChart from '@/features/orgs/projects/serverless-functions/components/MetricsTab/components/MetricChart';
 import { colorForMethod } from '@/features/orgs/projects/serverless-functions/components/MetricsTab/constants';
@@ -13,6 +12,8 @@ export interface ResponseTimesSectionProps {
   p75: MetricPanelResponse;
   avg: MetricPanelResponse;
   onExpand: (slug: MetricPanelSlug) => void;
+  onZoomRange?: (fromMs: number, toMs: number) => void;
+  onZoomReset?: () => void;
 }
 
 const methodKey = (labels: Record<string, string>) =>
@@ -28,13 +29,9 @@ export default function ResponseTimesSection({
   p75,
   avg,
   onExpand,
+  onZoomRange,
+  onZoomReset,
 }: ResponseTimesSectionProps) {
-  // TODO(dbm): remove once response-time chart labels are verified.
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('[ResponseTimesSection]', { max, p95, p75, avg });
-  }, [max, p95, p75, avg]);
-
   const panels: Array<{
     data: MetricPanelResponse;
     slug: MetricPanelSlug;
@@ -64,6 +61,8 @@ export default function ResponseTimesSection({
               seriesLabelFor={methodLabel}
               colorFor={methodColor}
               valueFormatter={formatMs}
+              onZoomRange={onZoomRange}
+              onZoomReset={onZoomReset}
             />
           </ExpandablePanelCard>
         );

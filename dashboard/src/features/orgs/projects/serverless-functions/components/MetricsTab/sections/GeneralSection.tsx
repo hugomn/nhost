@@ -23,6 +23,8 @@ export interface GeneralSectionProps {
   averageResponseSize: MetricPanelResponse;
   totalRequests: RequestsTableRow[];
   onExpand: (slug: MetricPanelSlug) => void;
+  onZoomRange?: (fromMs: number, toMs: number) => void;
+  onZoomReset?: () => void;
 }
 
 const methodKey = (labels: Record<string, string>) =>
@@ -45,6 +47,8 @@ export default function GeneralSection({
   averageResponseSize,
   totalRequests,
   onExpand,
+  onZoomRange,
+  onZoomReset,
 }: GeneralSectionProps) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -61,6 +65,8 @@ export default function GeneralSection({
           seriesLabelFor={methodLabel}
           colorFor={methodColor}
           valueFormatter={formatInteger}
+          onZoomRange={onZoomRange}
+          onZoomReset={onZoomReset}
         />
       </ExpandablePanelCard>
 
@@ -77,6 +83,8 @@ export default function GeneralSection({
           seriesLabelFor={statusLabel}
           colorFor={statusColor}
           valueFormatter={formatInteger}
+          onZoomRange={onZoomRange}
+          onZoomReset={onZoomReset}
         />
       </ExpandablePanelCard>
 
@@ -92,6 +100,8 @@ export default function GeneralSection({
           seriesLabelFor={methodLabel}
           colorFor={methodColor}
           valueFormatter={formatBytes}
+          onZoomRange={onZoomRange}
+          onZoomReset={onZoomReset}
         />
       </ExpandablePanelCard>
 

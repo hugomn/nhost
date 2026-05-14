@@ -21,6 +21,8 @@ export interface ErrorsSectionProps {
   errorRate: MetricPanelResponse;
   totalErrors: ErrorsTableRow[];
   onExpand: (slug: MetricPanelSlug) => void;
+  onZoomRange?: (fromMs: number, toMs: number) => void;
+  onZoomReset?: () => void;
 }
 
 const methodKey = (labels: Record<string, string>) =>
@@ -34,6 +36,8 @@ export default function ErrorsSection({
   errorRate,
   totalErrors,
   onExpand,
+  onZoomRange,
+  onZoomReset,
 }: ErrorsSectionProps) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -50,6 +54,8 @@ export default function ErrorsSection({
           seriesLabelFor={methodLabel}
           colorFor={methodColor}
           valueFormatter={formatPercentUnit}
+          onZoomRange={onZoomRange}
+          onZoomReset={onZoomReset}
         />
       </ExpandablePanelCard>
 

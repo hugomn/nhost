@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useProject } from '@/features/orgs/projects/hooks/useProject';
 import {
   type MetricsTimeRange,
@@ -29,9 +29,9 @@ export default function useFunctionMetrics({
 
   // refetchKey forces a fresh "now" when the user clicks refresh; range/now changes
   // propagate to from/to and Apollo re-fetches automatically on variable change.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refetchKey is a re-run trigger.
   const { from, to } = useMemo(
     () => resolveTimeRange(range),
-    // biome-ignore lint/correctness/useExhaustiveDependencies: refetchKey is a re-run trigger.
     [range, refetchKey],
   );
 
@@ -41,6 +41,7 @@ export default function useFunctionMetrics({
 
   const {
     data: queryData,
+    previousData,
     loading: loadingQuery,
     error,
   } = useGetFunctionsMetricsDashboardQuery({
@@ -55,17 +56,15 @@ export default function useFunctionMetrics({
     skip: !project?.id,
   });
 
-  // TODO(dbm): remove once metric chart shape is verified end-to-end.
-  useEffect(() => {
-    if (queryData) {
-      // eslint-disable-next-line no-console
-      console.log('[useFunctionMetrics] queryData', queryData);
-    }
-  }, [queryData]);
+  // Apollo's equivalent of TanStack's `placeholderData: keepPreviousData`: when
+  // variables change (zoom, time-range pick, refresh) `queryData` flips to
+  // undefined until the next round-trip lands. Falling back to `previousData`
+  // keeps the charts rendered with stale data instead of flashing the skeleton.
+  const sourceData = queryData ?? previousData;
 
   const data = useMemo(
-    () => (queryData ? transformFunctionMetrics(queryData, to) : undefined),
-    [queryData, to],
+    () => (sourceData ? transformFunctionMetrics(sourceData, to) : undefined),
+    [sourceData, to],
   );
 
   const refetch = useCallback(() => {
