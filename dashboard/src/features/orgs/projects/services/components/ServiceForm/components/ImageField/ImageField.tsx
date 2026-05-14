@@ -1,11 +1,10 @@
 import { inputBaseClasses } from '@mui/material';
 import { useTheme } from '@mui/system';
+import { ExternalLink as ArrowSquareOutIcon, InfoIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Box } from '@/components/ui/v2/Box';
 import { Input } from '@/components/ui/v2/Input';
-import { ArrowSquareOutIcon } from '@/components/ui/v2/icons/ArrowSquareOutIcon';
-import { InfoIcon } from '@/components/ui/v2/icons/InfoIcon';
 import { Link } from '@/components/ui/v2/Link';
 import { Text } from '@/components/ui/v2/Text';
 import { Tooltip } from '@/components/ui/v2/Tooltip';
@@ -136,11 +135,7 @@ export default function ImageField({
                   </span>
                 }
               >
-                <InfoIcon
-                  aria-label="Info"
-                  className="h-4 w-4"
-                  color="primary"
-                />
+                <InfoIcon aria-label="Info" className="h-4 w-4 text-primary" />
               </Tooltip>
             </Box>
           }
