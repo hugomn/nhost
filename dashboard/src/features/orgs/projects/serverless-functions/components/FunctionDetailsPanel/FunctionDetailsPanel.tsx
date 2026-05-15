@@ -1,8 +1,11 @@
 import { FileCode } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { UpgradeToProBanner } from '@/components/common/UpgradeToProBanner';
+import { Container } from '@/components/layout/Container';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/v3/tabs';
 import { useIsPlatform } from '@/features/orgs/projects/common/hooks/useIsPlatform';
 import { useAppClient } from '@/features/orgs/projects/hooks/useAppClient';
+import { useCurrentOrg } from '@/features/orgs/projects/hooks/useCurrentOrg';
 import { useLocalMimirClient } from '@/features/orgs/projects/hooks/useLocalMimirClient';
 import { useProject } from '@/features/orgs/projects/hooks/useProject';
 import { ExecuteTab } from '@/features/orgs/projects/serverless-functions/components/ExecuteTab';
@@ -40,10 +43,13 @@ export default function FunctionDetailsPanel({
   };
 
   const isPlatform = useIsPlatform();
+  const { org } = useCurrentOrg();
   const localMimirClient = useLocalMimirClient();
   const { project } = useProject();
   const appClient = useAppClient();
   const defaultEndpointUrl = `${appClient.functions.baseURL}${fn.route}`;
+
+  const showMetricsPaywall = isPlatform && org?.plan?.isFree;
 
   const { data: customDomainData } = useGetServerlessFunctionsSettingsQuery({
     variables: {
@@ -110,7 +116,19 @@ export default function FunctionDetailsPanel({
       )}
       {activeTab === 'metrics' && (
         <div className="flex-1 overflow-auto">
-          <MetricsTab fn={fn} />
+          {showMetricsPaywall ? (
+            <Container
+              className="grid grid-flow-row gap-6 bg-transparent"
+              rootClassName="bg-transparent"
+            >
+              <UpgradeToProBanner
+                title="To unlock Function Metrics, transfer this project to a Pro or Team organization."
+                description=""
+              />
+            </Container>
+          ) : (
+            <MetricsTab fn={fn} />
+          )}
         </div>
       )}
     </div>
