@@ -1,3 +1,29 @@
+## [@nhost/dashboard@2.62.1] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- *(ci)* Make build and check work on NixOS (#4234)
+- *(dashboard)* Fix column ordering on the database table (#4198)
+- *(dashboard)* Add support for generated columns (#4186)
+- *(dashboard)* Update create user e2e test (#4251)
+- *(dashboard)* Display boolean values in CustomCheckEditor (#4228)
+- *(dashboard)* Show discard changes dialog for GraphQL settings drawer (#4235)
+- *(dashboard)* Show computed fields in table permissions (#4248)
+- *(deps)* Fix fast-uri advisory (GHSA-v39h-62p7-jpjc) (#4265)
+- *(dashboard)* Drop redundant NEXT_PUBLIC_ENV admin-secret branc (#4259)
+- *(deps)* Update biome to 2.4.15 (#4270)
+- *(dashboard)* Migrate custom product icons to v3 (#4249)
+- *(dashboard)* Migrate BaseTableForm to v3 (#4212)
+- *(dashboard)* Unify toast background color in light theme (#4269)
+- *(dashboard)* Fixed mobile responsive smtp layout (#4274)
+- *(dashboard)* Serialize remote schema permission presets as GraphQL literals (#4257)
+
+
+### Chore
+
+- *(deps)* Upgrade Next.js to 16.2.5 (#4271)
+- *(deps)* Update pnpm to v11 (#4275)
+
 ## [@nhost/dashboard@2.62.0] - 2026-05-05
 
 ### 🚀 Features
