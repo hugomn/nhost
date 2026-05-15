@@ -88,7 +88,9 @@ export default function FunctionDetailsPanel({
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="execute">Execute</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
-            <TabsTrigger value="metrics">Metrics</TabsTrigger>
+            <TabsTrigger value="metrics" disabled={!isPlatform}>
+              Metrics
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
