@@ -39,6 +39,10 @@ export interface MetricChartProps {
   connectNulls?: boolean;
   height?: number;
   className?: string;
+  // Explicit [fromMs, toMs] for the XAxis so the full requested window renders
+  // even when bragi returns no datapoints for empty buckets (AVG and histogram
+  // metrics drop empty intervals, unlike SUM which pads with zeros).
+  xDomain?: [number, number];
   onZoomRange?: (fromMs: number, toMs: number) => void;
   onZoomReset?: () => void;
 }
@@ -82,6 +86,7 @@ export default function MetricChart({
   connectNulls = false,
   height = 260,
   className,
+  xDomain,
   onZoomRange,
   onZoomReset,
 }: MetricChartProps) {
@@ -243,7 +248,7 @@ export default function MetricChart({
                   dataKey="timestamp"
                   type="number"
                   scale="time"
-                  domain={['dataMin', 'dataMax']}
+                  domain={xDomain ?? ['dataMin', 'dataMax']}
                   tickFormatter={formatTimestampTick}
                   tickLine={false}
                   axisLine={false}
@@ -295,7 +300,7 @@ export default function MetricChart({
                   dataKey="timestamp"
                   type="number"
                   scale="time"
-                  domain={['dataMin', 'dataMax']}
+                  domain={xDomain ?? ['dataMin', 'dataMax']}
                   tickFormatter={formatTimestampTick}
                   tickLine={false}
                   axisLine={false}

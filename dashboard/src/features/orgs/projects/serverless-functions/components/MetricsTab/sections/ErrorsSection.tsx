@@ -20,6 +20,7 @@ import type {
 export interface ErrorsSectionProps {
   errorRate: MetricPanelResponse;
   totalErrors: ErrorsTableRow[];
+  xDomain: [number, number];
   onExpand: (slug: MetricPanelSlug) => void;
   onZoomRange?: (fromMs: number, toMs: number) => void;
   onZoomReset?: () => void;
@@ -35,6 +36,7 @@ const methodColor = (_key: string, labels: Record<string, string>, i: number) =>
 export default function ErrorsSection({
   errorRate,
   totalErrors,
+  xDomain,
   onExpand,
   onZoomRange,
   onZoomReset,
@@ -54,6 +56,7 @@ export default function ErrorsSection({
           seriesLabelFor={methodLabel}
           colorFor={methodColor}
           valueFormatter={formatPercentUnit}
+          xDomain={xDomain}
           onZoomRange={onZoomRange}
           onZoomReset={onZoomReset}
         />

@@ -22,6 +22,7 @@ export interface GeneralSectionProps {
   responseStatus: MetricPanelResponse;
   averageResponseSize: MetricPanelResponse;
   totalRequests: RequestsTableRow[];
+  xDomain: [number, number];
   onExpand: (slug: MetricPanelSlug) => void;
   onZoomRange?: (fromMs: number, toMs: number) => void;
   onZoomReset?: () => void;
@@ -46,6 +47,7 @@ export default function GeneralSection({
   responseStatus,
   averageResponseSize,
   totalRequests,
+  xDomain,
   onExpand,
   onZoomRange,
   onZoomReset,
@@ -65,6 +67,7 @@ export default function GeneralSection({
           seriesLabelFor={methodLabel}
           colorFor={methodColor}
           valueFormatter={formatInteger}
+          xDomain={xDomain}
           onZoomRange={onZoomRange}
           onZoomReset={onZoomReset}
         />
@@ -83,6 +86,7 @@ export default function GeneralSection({
           seriesLabelFor={statusLabel}
           colorFor={statusColor}
           valueFormatter={formatInteger}
+          xDomain={xDomain}
           onZoomRange={onZoomRange}
           onZoomReset={onZoomReset}
         />
@@ -100,6 +104,7 @@ export default function GeneralSection({
           seriesLabelFor={methodLabel}
           colorFor={methodColor}
           valueFormatter={formatBytes}
+          xDomain={xDomain}
           onZoomRange={onZoomRange}
           onZoomReset={onZoomReset}
         />

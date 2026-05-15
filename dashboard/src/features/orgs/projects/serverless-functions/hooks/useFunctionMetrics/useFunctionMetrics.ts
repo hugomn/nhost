@@ -18,6 +18,7 @@ interface UseFunctionMetricsResult {
   loading: boolean;
   error: Error | undefined;
   refetch: () => void;
+  xDomain: [number, number];
 }
 
 export default function useFunctionMetrics({
@@ -71,10 +72,19 @@ export default function useFunctionMetrics({
     setRefetchKey((k) => k + 1);
   }, []);
 
+  // Charts use this as the XAxis domain so the full requested window renders
+  // even when bragi returns no datapoints for empty buckets (AVG and histogram
+  // metrics drop empty intervals, unlike SUM which pads with zeros).
+  const xDomain = useMemo<[number, number]>(
+    () => [from.getTime(), to.getTime()],
+    [from, to],
+  );
+
   return {
     data,
     loading: loadingProject || loadingQuery,
     error,
     refetch,
+    xDomain,
   };
 }

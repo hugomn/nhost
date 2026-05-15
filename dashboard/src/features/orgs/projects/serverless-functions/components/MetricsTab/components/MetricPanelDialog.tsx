@@ -36,6 +36,7 @@ export interface MetricPanelDialogProps {
   openPanel: MetricPanelSlug | null;
   filter: MetricPanelFilter;
   metrics: FunctionMetricsResponse | undefined;
+  xDomain: [number, number];
   onClose: VoidFunction;
   onFilterChange: (filter: MetricPanelFilter) => void;
   onZoomRange?: (fromMs: number, toMs: number) => void;
@@ -46,6 +47,7 @@ export default function MetricPanelDialog({
   openPanel,
   filter,
   metrics,
+  xDomain,
   onClose,
   onFilterChange,
   onZoomRange,
@@ -161,6 +163,7 @@ export default function MetricPanelDialog({
               : (_k, labels, i) => colorForMethod(labels.method ?? '', i)
           }
           valueFormatter={valueFormatter}
+          xDomain={xDomain}
           onZoomRange={onZoomRange}
           onZoomReset={onZoomReset}
         />

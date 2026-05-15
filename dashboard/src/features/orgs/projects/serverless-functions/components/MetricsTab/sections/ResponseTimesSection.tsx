@@ -11,6 +11,7 @@ export interface ResponseTimesSectionProps {
   p95: MetricPanelResponse;
   p75: MetricPanelResponse;
   avg: MetricPanelResponse;
+  xDomain: [number, number];
   onExpand: (slug: MetricPanelSlug) => void;
   onZoomRange?: (fromMs: number, toMs: number) => void;
   onZoomReset?: () => void;
@@ -28,6 +29,7 @@ export default function ResponseTimesSection({
   p95,
   p75,
   avg,
+  xDomain,
   onExpand,
   onZoomRange,
   onZoomReset,
@@ -61,6 +63,7 @@ export default function ResponseTimesSection({
               seriesLabelFor={methodLabel}
               colorFor={methodColor}
               valueFormatter={formatMs}
+              xDomain={xDomain}
               onZoomRange={onZoomRange}
               onZoomReset={onZoomReset}
             />

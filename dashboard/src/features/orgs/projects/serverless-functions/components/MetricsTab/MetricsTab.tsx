@@ -51,7 +51,7 @@ function MetricsLoadingSkeleton() {
 
 export default function MetricsTab({ fn }: MetricsTabProps) {
   const { range, setRange } = useMetricsTimeRangeUrlState();
-  const { data, loading, error, refetch } = useFunctionMetrics({
+  const { data, loading, error, refetch, xDomain } = useFunctionMetrics({
     route: fn.route,
     range,
   });
@@ -118,6 +118,7 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
                   responseStatus={data.general.responseStatus}
                   averageResponseSize={data.general.averageResponseSize}
                   totalRequests={data.general.totalRequests}
+                  xDomain={xDomain}
                   onExpand={open}
                   onZoomRange={handleZoomRange}
                   onZoomReset={handleZoomReset}
@@ -133,6 +134,7 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
                   p95={data.responseTimes.p95}
                   p75={data.responseTimes.p75}
                   avg={data.responseTimes.avg}
+                  xDomain={xDomain}
                   onExpand={open}
                   onZoomRange={handleZoomRange}
                   onZoomReset={handleZoomReset}
@@ -146,6 +148,7 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
                 <ErrorsSection
                   errorRate={data.errors.errorRate}
                   totalErrors={data.errors.totalErrors}
+                  xDomain={xDomain}
                   onExpand={open}
                   onZoomRange={handleZoomRange}
                   onZoomReset={handleZoomReset}
@@ -158,6 +161,7 @@ export default function MetricsTab({ fn }: MetricsTabProps) {
             openPanel={openPanel}
             filter={filter}
             metrics={data}
+            xDomain={xDomain}
             onClose={close}
             onFilterChange={setFilter}
             onZoomRange={handleZoomRange}
