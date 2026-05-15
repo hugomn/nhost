@@ -1,3 +1,22 @@
+## [cli@1.46.0] - 2026-05-15
+
+### 🚀 Features
+
+- *(cli)* Embed email templates instead of fetching at runtime (#4273)
+
+
+### 🐛 Bug Fixes
+
+- *(ci)* Make build and check work on NixOS (#4234)
+- *(ci)* Use the environment NHOST_PAT directly (#4246)
+- *(cli)* Create install path if it doesn't exist (#4256)
+
+
+### ⚙️ Miscellaneous Tasks
+
+- *(cli)* Bump references to 1.45.0 (#4219)
+- *(cli)* Update schema (#4288)
+
 ## [cli@1.45.0] - 2026-04-30
 
 ### 🚀 Features
