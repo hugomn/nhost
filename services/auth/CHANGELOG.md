@@ -1,3 +1,14 @@
+## [auth@0.51.0] - 2026-05-15
+
+### 🚀 Features
+
+- *(cli)* Embed email templates instead of fetching at runtime (#4273)
+
+
+### 🐛 Bug Fixes
+
+- *(ci)* Make build and check work on NixOS (#4234)
+
 ## [auth@0.50.1] - 2026-04-30
 
 ### 🐛 Bug Fixes
