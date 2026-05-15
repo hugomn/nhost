@@ -1,3 +1,9 @@
+## [storage@0.13.1] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- *(ci)* Make build and check work on NixOS (#4234)
+
 ## [storage@0.13.0] - 2026-04-17
 
 ### 🚀 Features
