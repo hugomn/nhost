@@ -148,12 +148,12 @@ export default function MetricPanelDialog({
           seriesKeyFor={
             keyKind === 'status'
               ? (labels) => `s${labels.status ?? 'unknown'}`
-              : (labels) => (labels.method ?? 'unknown').toLowerCase()
+              : (labels) => (labels.method ?? 'all-methods').toLowerCase()
           }
           seriesLabelFor={
             keyKind === 'status'
               ? (_k, labels) => labels.status ?? 'unknown'
-              : (_k, labels) => labels.method ?? 'unknown'
+              : (_k, labels) => labels.method ?? 'All methods'
           }
           colorFor={
             keyKind === 'status'

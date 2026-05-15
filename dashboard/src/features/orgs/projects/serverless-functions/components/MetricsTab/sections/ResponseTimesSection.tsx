@@ -17,9 +17,9 @@ export interface ResponseTimesSectionProps {
 }
 
 const methodKey = (labels: Record<string, string>) =>
-  (labels.method ?? 'unknown').toLowerCase();
+  (labels.method ?? 'all-methods').toLowerCase();
 const methodLabel = (_key: string, labels: Record<string, string>) =>
-  labels.method ?? 'unknown';
+  labels.method ?? 'All methods';
 const methodColor = (_key: string, labels: Record<string, string>, i: number) =>
   colorForMethod(labels.method ?? '', i);
 
